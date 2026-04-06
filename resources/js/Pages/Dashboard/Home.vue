@@ -56,6 +56,22 @@ function logout() {
                 </a>
 
                 <a
+                    href="/dashboard/orders"
+                    class="bg-white p-4 rounded-lg shadow text-center hover:shadow-md active:shadow-sm"
+                >
+                    <div class="text-2xl mb-2">📋</div>
+                    <div class="text-sm font-medium text-gray-700">Orders</div>
+                </a>
+
+                <a
+                    href="/dashboard/links"
+                    class="bg-white p-4 rounded-lg shadow text-center hover:shadow-md active:shadow-sm"
+                >
+                    <div class="text-2xl mb-2">🔗</div>
+                    <div class="text-sm font-medium text-gray-700">Links</div>
+                </a>
+
+                <a
                     href="/dashboard/settings"
                     class="bg-white p-4 rounded-lg shadow text-center hover:shadow-md active:shadow-sm"
                 >
@@ -70,14 +86,6 @@ function logout() {
                 >
                     <div class="text-2xl mb-2">🏪</div>
                     <div class="text-sm font-medium text-gray-700">View Store</div>
-                </a>
-
-                <a
-                    href="/dashboard/products/create"
-                    class="bg-white p-4 rounded-lg shadow text-center hover:shadow-md active:shadow-sm"
-                >
-                    <div class="text-2xl mb-2">➕</div>
-                    <div class="text-sm font-medium text-gray-700">Add Product</div>
                 </a>
             </div>
         </main>

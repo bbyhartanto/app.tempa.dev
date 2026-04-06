@@ -13,7 +13,7 @@ const form = ref({
 });
 
 const errors = ref({});
-const imageUrl = ref('');
+const imagePreview = ref([]);
 
 function submit() {
     router.post(route('dashboard.products.store'), form.value, {
@@ -23,15 +23,38 @@ function submit() {
     });
 }
 
-function addImage() {
-    if (imageUrl.value) {
-        form.value.images.push(imageUrl.value);
-        imageUrl.value = '';
+function handleImageUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+        errors.value.images = 'Only JPEG, PNG, and WebP images are allowed';
+        return;
     }
+
+    // Validate file size (10MB max)
+    if (file.size > 10 * 1024 * 1024) {
+        errors.value.images = 'Each image must be less than 10MB';
+        return;
+    }
+
+    form.value.images = [file];
+
+    // Create preview
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        imagePreview.value = [e.target.result];
+    };
+    reader.readAsDataURL(file);
+
+    // Clear the input
+    event.target.value = '';
 }
 
 function removeImage(index) {
     form.value.images.splice(index, 1);
+    imagePreview.value.splice(index, 1);
 }
 </script>
 
@@ -101,30 +124,44 @@ function removeImage(index) {
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium text-gray-700">Images (URLs)</label>
-                        <div class="mt-2 flex flex-wrap gap-2">
-                            <div v-for="(img, index) in form.images" :key="index" class="relative h-16 w-16 rounded border">
-                                <img :src="img" class="h-full w-full object-cover rounded" />
-                                <button 
-                                    type="button" 
-                                    @click="removeImage(index)" 
-                                    class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
+                        <label class="block text-sm font-medium text-gray-700">Product Images</label>
+                        <p class="text-xs text-gray-500 mb-2">Upload pre-compressed images (JPEG, PNG, WebP, max 10MB each)</p>
+                        
+                        <!-- Image Previews -->
+                        <div v-if="imagePreview.length > 0" class="mt-2 flex flex-wrap gap-2">
+                            <div v-for="(preview, index) in imagePreview" :key="index" class="relative h-20 w-20 rounded-lg border overflow-hidden">
+                                <img :src="preview" class="h-full w-full object-cover" />
+                                <button
+                                    type="button"
+                                    @click="removeImage(index)"
+                                    class="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600"
                                 >×</button>
                             </div>
                         </div>
-                        <div class="mt-2 flex space-x-2">
-                            <input 
-                                v-model="imageUrl" 
-                                type="url" 
-                                placeholder="https://..." 
-                                class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                            />
-                            <button 
-                                type="button" 
-                                @click="addImage" 
-                                class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm"
-                            >Add</button>
+
+                        <!-- Uploaded Message -->
+                        <p v-if="imagePreview.length > 0" class="mt-2 text-sm text-green-600">Image uploaded. Remove it to replace.</p>
+
+                        <!-- Upload Button -->
+                        <div v-if="imagePreview.length === 0" class="mt-2">
+                            <label class="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
+                                <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                                    <svg class="w-8 h-8 mb-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                                    </svg>
+                                    <p class="text-sm text-gray-500">Click to upload image</p>
+                                    <p class="text-xs text-gray-400">Max 1 image</p>
+                                </div>
+                                <input
+                                    type="file"
+                                    @change="handleImageUpload"
+                                    accept="image/jpeg,image/png,image/webp"
+                                    class="hidden"
+                                />
+                            </label>
                         </div>
+                        
+                        <p v-if="errors.images" class="mt-1 text-xs text-red-600">{{ errors.images }}</p>
                     </div>
 
                     <div class="flex items-center">

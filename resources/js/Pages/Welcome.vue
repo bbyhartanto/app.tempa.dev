@@ -3,6 +3,7 @@ import { computed } from 'vue';
 import { Link, router, usePage } from '@inertiajs/vue3';
 
 const page = usePage();
+const appName = computed(() => page.props.app_name);
 const auth = computed(() => page.props.auth);
 const user = computed(() => auth.value?.user);
 
@@ -26,7 +27,7 @@ const demoStores = [
         <!-- Header -->
         <header class="bg-white shadow-sm">
             <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-                <h1 class="text-xl font-bold text-gray-900">E-Catalog SaaS</h1>
+                <h1 class="text-xl font-bold text-gray-900">{{ appName }}</h1>
                 <div class="flex items-center space-x-4">
                     <template v-if="user">
                         <span class="text-sm text-gray-600">Hi, {{ user.name }}</span>

@@ -1,0 +1,14 @@
+{
+    auto_https off
+}
+
+:8000 {
+    bind 0.0.0.0
+    reverse_proxy 127.0.0.1:8001
+}
+
+:8443 {
+    bind 0.0.0.0
+    tls .cert/cert.pem .cert/key.pem
+    reverse_proxy 127.0.0.1:8001
+}

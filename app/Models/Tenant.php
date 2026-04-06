@@ -29,6 +29,7 @@ class Tenant extends Model
         'opening_schedule',
         'template_slug',
         'settings',
+        'store_links',
         'status',
         'approved_at',
     ];
@@ -36,6 +37,7 @@ class Tenant extends Model
     protected $casts = [
         'opening_schedule' => 'array',
         'settings' => 'array',
+        'store_links' => 'array',
         'approved_at' => 'datetime',
     ];
 
@@ -78,6 +80,14 @@ class Tenant extends Model
     public function orderLogs(): HasMany
     {
         return $this->hasMany(OrderLog::class);
+    }
+
+    /**
+     * Get orders for this tenant.
+     */
+    public function orders(): HasMany
+    {
+        return $this->hasMany(Order::class)->orderBy('created_at', 'desc');
     }
 
     /**

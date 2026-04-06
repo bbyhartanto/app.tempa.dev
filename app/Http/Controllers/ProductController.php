@@ -6,6 +6,7 @@ use App\Models\Product;
 use App\Models\Tenant;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -82,9 +83,9 @@ class ProductController extends Controller
             'slug' => 'nullable|string|max:255|unique:products,slug,NULL,id,tenant_id,' . $tenant->id,
             'description' => 'nullable|string|max:5000',
             'price' => 'required|numeric|min:0',
-            'currency' => 'string|size:3|default:IDR',
-            'images' => 'nullable|array',
-            'images.*' => 'string|url|max:500',
+            'currency' => 'nullable|string|size:3',
+            'images' => 'nullable|array|max:1',
+            'images.*' => 'image|mimes:jpeg,png,webp|max:10240', // Max 10MB per image
             'is_available' => 'boolean',
             'sort_order' => 'integer|min:0',
         ]);
@@ -104,6 +105,18 @@ class ProductController extends Controller
         $validated['is_available'] = $validated['is_available'] ?? true;
         $validated['sort_order'] = $validated['sort_order'] ?? 0;
         $validated['currency'] = $validated['currency'] ?? 'IDR';
+
+        // Handle file uploads
+        $imagePaths = [];
+        if ($request->hasFile('images')) {
+            $uploadDir = 'products/' . $tenant->id;
+            foreach ($request->file('images') as $image) {
+                $filename = Str::uuid() . '.' . $image->getClientOriginalExtension();
+                $path = $image->storeAs($uploadDir, $filename, 'public');
+                $imagePaths[] = $path;
+            }
+        }
+        $validated['images'] = $imagePaths;
 
         Product::create($validated);
 
@@ -127,7 +140,7 @@ class ProductController extends Controller
                 'description' => $product->description,
                 'price' => (float) $product->price,
                 'currency' => $product->currency,
-                'images' => $product->images ?? [],
+                'images' => $product->image_urls,
                 'is_available' => $product->is_available,
                 'sort_order' => $product->sort_order,
                 'created_at' => $product->created_at->toIso8601String(),
@@ -152,7 +165,7 @@ class ProductController extends Controller
                 'description' => $product->description,
                 'price' => (float) $product->price,
                 'currency' => $product->currency,
-                'images' => $product->images ?? [],
+                'images' => $product->images ?? [], // Raw storage paths for editing
                 'is_available' => $product->is_available,
                 'sort_order' => $product->sort_order,
             ],
@@ -173,11 +186,42 @@ class ProductController extends Controller
             'description' => 'nullable|string|max:5000',
             'price' => 'sometimes|numeric|min:0',
             'currency' => 'sometimes|string|size:3',
-            'images' => 'nullable|array',
-            'images.*' => 'string|url|max:500',
+            'images' => 'nullable|array|max:1',
+            'images.*' => 'image|mimes:jpeg,png,webp|max:10240', // Max 10MB per image
             'is_available' => 'boolean',
             'sort_order' => 'integer|min:0',
+            'remove_images' => 'nullable|array',
+            'remove_images.*' => 'string',
         ]);
+
+        // Handle image removal FIRST
+        $currentImages = $product->images ?? [];
+
+        if (isset($validated['remove_images'])) {
+            $currentImages = array_diff($currentImages, $validated['remove_images']);
+
+            // Delete removed images from storage
+            foreach ($validated['remove_images'] as $imagePath) {
+                if (Storage::disk('public')->exists($imagePath)) {
+                    Storage::disk('public')->delete($imagePath);
+                }
+            }
+
+            unset($validated['remove_images']);
+        }
+
+        // Handle file uploads (append to cleaned image list)
+        if ($request->hasFile('images')) {
+            $uploadDir = 'products/' . $tenant->id;
+
+            foreach ($request->file('images') as $image) {
+                $filename = Str::uuid() . '.' . $image->getClientOriginalExtension();
+                $path = $image->storeAs($uploadDir, $filename, 'public');
+                $currentImages[] = $path;
+            }
+        }
+
+        $validated['images'] = array_values($currentImages);
 
         $product->update($validated);
 
@@ -192,6 +236,16 @@ class ProductController extends Controller
     {
         $tenant = $this->getCurrentTenant();
         $product = $tenant->products()->findOrFail($id);
+        
+        // Delete product images from storage
+        if ($product->images) {
+            foreach ($product->images as $imagePath) {
+                if (Storage::disk('public')->exists($imagePath)) {
+                    Storage::disk('public')->delete($imagePath);
+                }
+            }
+        }
+        
         $product->delete();
 
         return redirect()->route('dashboard.products.index')

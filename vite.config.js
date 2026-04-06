@@ -13,8 +13,13 @@ export default defineConfig({
         vue(),
     ],
     server: {
+        host: '192.168.18.134',
+        port: 5173,
+        strictPort: true,
+        cors: true,
         watch: {
             ignored: ['**/storage/framework/views/**'],
         },
+        origin: 'http://192.168.18.134:5173',
     },
 });

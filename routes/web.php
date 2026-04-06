@@ -4,6 +4,10 @@ use App\Http\Controllers\Admin\TenantManagementController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\RegisteredTenantController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\OrderController;
+use App\Http\Controllers\ReceiptController;
+use App\Http\Controllers\Dashboard\OrderController as DashboardOrderController;
+use App\Http\Controllers\Dashboard\OrderItemController as DashboardOrderItemController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\StorefrontController;
 use App\Http\Middleware\ResolveTenant;
@@ -12,7 +16,7 @@ use Inertia\Inertia;
 
 /*
 |--------------------------------------------------------------------------
-| Authentication Routes (MVP)
+| Authentication Routes
 |--------------------------------------------------------------------------
 */
 
@@ -57,6 +61,13 @@ Route::middleware(['auth', 'tenant'])->prefix('dashboard')->name('dashboard.')->
     Route::put('/settings', [DashboardController::class, 'updateSettings'])
         ->name('settings.update');
 
+    // Links management
+    Route::get('/links', [DashboardController::class, 'links'])
+        ->name('links.index');
+
+    Route::put('/links', [DashboardController::class, 'updateLinks'])
+        ->name('links.update');
+
     Route::get('/products', [ProductController::class, 'index'])
         ->name('products.index');
 
@@ -80,6 +91,31 @@ Route::middleware(['auth', 'tenant'])->prefix('dashboard')->name('dashboard.')->
 
     Route::post('/orders/log', [DashboardController::class, 'logOrder'])
         ->name('orders.log');
+
+    // Order management
+    Route::get('/orders', [DashboardOrderController::class, 'index'])
+        ->name('orders.index');
+
+    Route::get('/orders/{id}', [DashboardOrderController::class, 'show'])
+        ->name('orders.show');
+
+    Route::patch('/orders/{id}', [DashboardOrderController::class, 'update'])
+        ->name('orders.update');
+
+    Route::put('/orders/{id}/accept', [DashboardOrderController::class, 'accept'])
+        ->name('orders.accept');
+
+    Route::put('/orders/{id}/mark-paid', [DashboardOrderController::class, 'markPaid'])
+        ->name('orders.mark-paid');
+
+    Route::patch('/orders/{orderId}/items/{itemId}/quantity', [DashboardOrderItemController::class, 'updateQuantity'])
+        ->name('orders.items.quantity');
+
+    Route::delete('/orders/{orderId}/items/{itemId}', [DashboardOrderItemController::class, 'destroy'])
+        ->name('orders.items.destroy');
+
+    Route::post('/orders/{orderId}/items/{itemId}/restore', [DashboardOrderItemController::class, 'restore'])
+        ->name('orders.items.restore');
 });
 
 /*
@@ -119,14 +155,40 @@ Route::middleware(['auth', 'role:super_admin'])->prefix('admin')->name('admin.')
 
 /*
 |--------------------------------------------------------------------------
-| Public Storefront Routes (wildcard at the end!)
+| Public Storefront Routes (2 pages per store)
+|--------------------------------------------------------------------------
+| Sitemap:
+|   /{store_link}           → Home (Link Aggregator)
+|   /{store_link}/catalog   → Catalog (Product Grid with Cart)
+*/
+
+Route::middleware([ResolveTenant::class])->prefix('{store_link}')->name('storefront.')->group(function () {
+    // Home Page - Link Aggregator (NEW)
+    Route::get('/', [StorefrontController::class, 'home'])
+        ->name('home');
+
+    // Catalog Page - Product Grid (CURRENT)
+    Route::get('/catalog', [StorefrontController::class, 'catalog'])
+        ->name('catalog');
+
+    // Load More Products (for infinite scroll)
+    Route::get('/catalog/products', [StorefrontController::class, 'loadMoreProducts'])
+        ->name('catalog.products.load-more');
+
+    // Product Detail
+    Route::get('/products/{productSlug}', [StorefrontController::class, 'showProduct'])
+        ->name('products.show');
+
+    // Order Creation (API)
+    Route::post('/orders', [OrderController::class, 'store'])
+        ->name('orders.store');
+});
+
+/*
+|--------------------------------------------------------------------------
+| Public Receipt Route
 |--------------------------------------------------------------------------
 */
 
-Route::middleware([ResolveTenant::class])->group(function () {
-    Route::get('/{store_link}', [StorefrontController::class, 'index'])
-        ->name('storefront.home');
-
-    Route::get('/{store_link}/products/{productSlug}', [StorefrontController::class, 'showProduct'])
-        ->name('storefront.products.show');
-});
+Route::get('/receipt/{order_number}', [ReceiptController::class, 'show'])
+    ->name('receipt.show');

@@ -1,0 +1,41 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(lsof *)",
+      "Bash(ipconfig *)",
+      "Bash(ifconfig)",
+      "Bash(php *)",
+      "Bash(brew *)",
+      "Bash(mkcert *)",
+      "Bash(mkdir *)",
+      "Bash(kill *)",
+      "Bash(sleep *)",
+      "Bash(caddy *)",
+      "Bash(cd *)",
+      "Bash(npm run *)",
+      "Bash(curl *)",
+      "Bash(tail *)",
+      "Bash(truncate *)",
+      "Bash(sudo *)",
+      "Bash(netstat *)",
+      "Bash(ls *)",
+      "Bash(wc *)",
+      "Bash(ping *)",
+      "Bash(nohup *)",
+      "Bash(grep *)",
+      "Bash(cp *)",
+      "Bash(xargs *)",
+      "Bash(cat *)",
+      "Bash(sed *)",
+      "Bash(pkill *)",
+      "Bash(npx *)",
+      "Bash(tr *)",
+      "Bash(rm *)",
+      "Bash(chmod *)",
+      "Bash(bash *)",
+      "Bash(env *)",
+      "Bash(sqlite3 *)"
+    ]
+  },
+  "$version": 3
+}

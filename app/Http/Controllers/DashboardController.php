@@ -78,7 +78,28 @@ class DashboardController extends Controller
         $currentTemplateConfig = $this->templateEngine->getConfig($tenant);
 
         return Inertia::render('Dashboard/Settings', [
-            'tenant' => $tenant,
+            'tenant' => [
+                'id' => $tenant->id,
+                'name' => $tenant->name,
+                'email' => $tenant->email,
+                'phone' => $tenant->phone,
+                'whatsapp_number' => $tenant->whatsapp_number,
+                'logo_url' => $tenant->logo_url,
+                'background_image' => $tenant->background_image,
+                'description' => $tenant->description,
+                'address' => $tenant->address,
+                'city' => $tenant->city,
+                'province' => $tenant->province,
+                'streetname' => $tenant->streetname,
+                'google_maps_link' => $tenant->google_maps_link,
+                'latitude' => $tenant->latitude,
+                'longitude' => $tenant->longitude,
+                'template_slug' => $tenant->template_slug,
+                'settings' => $tenant->settings,
+                'store_links' => $tenant->store_links ?? [],
+                'status' => $tenant->status,
+                'store_link' => $tenant->store_link,
+            ],
             'availableTemplates' => $availableTemplates,
             'templateConfig' => $currentTemplateConfig,
         ]);
@@ -109,6 +130,7 @@ class DashboardController extends Controller
             'opening_schedule' => 'sometimes|nullable|array',
             'template_slug' => 'sometimes|string|exists:templates,slug',
             'settings' => 'sometimes|nullable|array',
+            'store_links' => 'sometimes|nullable|array',
         ]);
 
         $tenant->update($validated);
@@ -141,5 +163,36 @@ class DashboardController extends Controller
             'success' => true,
             'order_id' => $orderLog->id,
         ]);
+    }
+
+    /**
+     * Display links management page
+     */
+    public function links(Request $request): Response
+    {
+        $tenant = $this->getCurrentTenant();
+
+        return Inertia::render('Dashboard/Links/Index', [
+            'storeLinks' => $tenant->store_links ?? [],
+        ]);
+    }
+
+    /**
+     * Update store links
+     */
+    public function updateLinks(Request $request)
+    {
+        $tenant = $this->getCurrentTenant();
+
+        $validated = $request->validate([
+            'store_links' => 'nullable|array',
+            'store_links.*.label' => 'required|string|max:100',
+            'store_links.*.url' => 'required|url|max:500',
+            'store_links.*.order' => 'integer|min:0',
+        ]);
+
+        $tenant->update($validated);
+
+        return redirect()->back()->with('success', 'Links updated successfully');
     }
 }
