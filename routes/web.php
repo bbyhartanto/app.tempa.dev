@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\Admin\PricingController;
+use App\Http\Controllers\Admin\SubscriptionManagementController;
 use App\Http\Controllers\Admin\TenantManagementController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\RegisteredTenantController;
@@ -142,6 +144,32 @@ Route::middleware(['auth', 'role:super_admin'])->prefix('admin')->name('admin.')
 
     Route::delete('/tenants/{tenant}', [TenantManagementController::class, 'destroy'])
         ->name('tenants.destroy');
+
+    // Subscription management
+    Route::get('/tenants/{tenant}/subscription', [SubscriptionManagementController::class, 'show'])
+        ->name('tenants.subscription.show');
+
+    Route::post('/tenants/{tenant}/subscription/activate', [SubscriptionManagementController::class, 'activate'])
+        ->name('tenants.subscription.activate');
+
+    Route::post('/tenants/{tenant}/subscription/cancel', [SubscriptionManagementController::class, 'cancel'])
+        ->name('tenants.subscription.cancel');
+
+    Route::post('/tenants/{tenant}/subscription/renew', [SubscriptionManagementController::class, 'renew'])
+        ->name('tenants.subscription.renew');
+
+    Route::post('/tenants/{tenant}/subscription/extend-trial', [SubscriptionManagementController::class, 'extendTrial'])
+        ->name('tenants.subscription.extend-trial');
+
+    // Pricing configuration
+    Route::get('/pricing', [PricingController::class, 'index'])
+        ->name('pricing.index');
+
+    Route::put('/pricing/{plan}', [PricingController::class, 'update'])
+        ->name('pricing.update');
+
+    Route::post('/pricing/bulk-update', [PricingController::class, 'bulkUpdate'])
+        ->name('pricing.bulk-update');
 
     Route::get('/templates', [TenantManagementController::class, 'templates'])
         ->name('templates.index');

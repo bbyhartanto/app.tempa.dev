@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\Tenant;
 use App\Models\User;
+use App\Services\SubscriptionService;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -33,7 +34,7 @@ class RegisteredTenantController extends Controller
     /**
      * Handle registration request
      */
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request, SubscriptionService $subscriptionService): RedirectResponse
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -53,6 +54,9 @@ class RegisteredTenantController extends Controller
             'status' => 'pending', // Requires super admin approval
             'template_slug' => 'minimal',
         ]);
+
+        // Start trial period (7 days)
+        $subscriptionService->startTrial($tenant);
 
         // Create user account linked to tenant
         $user = User::create([

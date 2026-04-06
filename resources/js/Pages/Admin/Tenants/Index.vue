@@ -1,6 +1,7 @@
 <script setup>
 import { ref } from 'vue';
 import { Link, router } from '@inertiajs/vue3';
+import SubscriptionModal from '@/Components/Admin/SubscriptionModal.vue';
 
 const props = defineProps({
     tenants: {
@@ -14,6 +15,8 @@ const props = defineProps({
 });
 
 const statusFilter = ref(props.filters.status || 'all');
+const showSubscriptionModal = ref(false);
+const selectedTenant = ref(null);
 
 function filterByStatus(status) {
     router.get(route('admin.tenants.index'), { status }, {
@@ -43,6 +46,58 @@ function deleteTenant(tenant) {
     if (confirm(`Delete tenant "${tenant.name}"? This will delete all their data.`)) {
         router.delete(route('admin.tenants.destroy', tenant.id));
     }
+}
+
+function openSubscriptionModal(tenant) {
+    selectedTenant.value = tenant;
+    showSubscriptionModal.value = true;
+}
+
+function getSubscriptionBadgeClass(tenant) {
+    if (!tenant.subscription_status || tenant.subscription_status === 'trial') {
+        return 'bg-blue-100 text-blue-800';
+    }
+    
+    switch (tenant.subscription_status) {
+        case 'subscribed':
+            return 'bg-green-100 text-green-800';
+        case 'grace_period':
+            return 'bg-orange-100 text-orange-800';
+        case 'expired':
+            return 'bg-red-100 text-red-800';
+        default:
+            return 'bg-gray-100 text-gray-800';
+    }
+}
+
+function getSubscriptionLabel(tenant) {
+    if (!tenant.subscription_status || tenant.subscription_status === 'trial') {
+        return 'Trial';
+    }
+    
+    const labels = {
+        subscribed: 'Subscribed',
+        grace_period: 'Grace Period',
+        expired: 'Expired',
+    };
+    
+    return labels[tenant.subscription_status] || tenant.subscription_status;
+}
+
+function getDaysRemaining(tenant) {
+    if (tenant.subscription_status === 'trial' && tenant.trial_ends_at) {
+        const endDate = new Date(tenant.trial_ends_at);
+        const now = new Date();
+        const diffTime = endDate - now;
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        return diffDays;
+    }
+    
+    if (tenant.current_subscription) {
+        return tenant.current_subscription.days_remaining;
+    }
+    
+    return null;
 }
 </script>
 
@@ -99,6 +154,7 @@ function deleteTenant(tenant) {
                         <tr>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Store</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Contact</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Subscription</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Template</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Created</th>
@@ -117,6 +173,24 @@ function deleteTenant(tenant) {
                                 <div class="text-sm text-gray-900">{{ tenant.email }}</div>
                             </td>
                             <td class="px-6 py-4">
+                                <div class="flex flex-col gap-1">
+                                    <span :class="getSubscriptionBadgeClass(tenant)" class="px-2 py-1 rounded-full text-xs font-medium inline-block w-fit">
+                                        {{ getSubscriptionLabel(tenant) }}
+                                    </span>
+                                    <div v-if="getDaysRemaining(tenant) !== null" class="text-xs text-gray-500">
+                                        <span v-if="getDaysRemaining(tenant) > 0">
+                                            {{ getDaysRemaining(tenant) }} days left
+                                        </span>
+                                        <span v-else class="text-red-600">
+                                            Expired
+                                        </span>
+                                    </div>
+                                    <div v-if="tenant.current_subscription" class="text-xs text-gray-500">
+                                        {{ tenant.current_subscription.plan.tier_label }}
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4">
                                 <span class="text-sm text-gray-500">{{ tenant.template_slug }}</span>
                             </td>
                             <td class="px-6 py-4">
@@ -131,29 +205,36 @@ function deleteTenant(tenant) {
                             <td class="px-6 py-4 text-sm text-gray-500">
                                 {{ new Date(tenant.created_at).toLocaleDateString() }}
                             </td>
-                            <td class="px-6 py-4 text-sm">
+                            <td class="px-6 py-4 text-sm space-x-2">
+                                <button 
+                                    @click="openSubscriptionModal(tenant)" 
+                                    class="text-purple-600 hover:text-purple-900 mr-2"
+                                >
+                                    Subscription
+                                </button>
+
                                 <Link :href="route('admin.tenants.show', tenant.id)" class="text-blue-600 hover:text-blue-900 mr-2">
                                     View
                                 </Link>
-                                
+
                                 <template v-if="tenant.status === 'pending'">
                                     <button @click="approveTenant(tenant)" class="text-green-600 hover:text-green-900 mr-2">
                                         Approve
                                     </button>
                                 </template>
-                                
+
                                 <template v-else-if="tenant.status === 'active'">
                                     <button @click="suspendTenant(tenant)" class="text-red-600 hover:text-red-900 mr-2">
                                         Suspend
                                     </button>
                                 </template>
-                                
+
                                 <template v-else-if="tenant.status === 'suspended'">
                                     <button @click="reactivateTenant(tenant)" class="text-green-600 hover:text-green-900 mr-2">
                                         Reactivate
                                     </button>
                                 </template>
-                                
+
                                 <button @click="deleteTenant(tenant)" class="text-red-600 hover:text-red-900">
                                     Delete
                                 </button>
@@ -183,5 +264,12 @@ function deleteTenant(tenant) {
                 </div>
             </div>
         </main>
+
+        <!-- Subscription Modal -->
+        <SubscriptionModal 
+            :show="showSubscriptionModal" 
+            :tenant="selectedTenant"
+            @close="showSubscriptionModal = false" 
+        />
     </div>
 </template>

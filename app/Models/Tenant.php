@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Str;
@@ -31,6 +32,11 @@ class Tenant extends Model
         'settings',
         'store_links',
         'status',
+        'subscription_status',
+        'trial_started_at',
+        'trial_ends_at',
+        'current_subscription_id',
+        'item_limit',
         'approved_at',
     ];
 
@@ -39,6 +45,9 @@ class Tenant extends Model
         'settings' => 'array',
         'store_links' => 'array',
         'approved_at' => 'datetime',
+        'trial_started_at' => 'datetime',
+        'trial_ends_at' => 'datetime',
+        'item_limit' => 'integer',
     ];
 
     protected static function boot()
@@ -88,6 +97,22 @@ class Tenant extends Model
     public function orders(): HasMany
     {
         return $this->hasMany(Order::class)->orderBy('created_at', 'desc');
+    }
+
+    /**
+     * Get all subscriptions for this tenant.
+     */
+    public function subscriptions(): HasMany
+    {
+        return $this->hasMany(TenantSubscription::class);
+    }
+
+    /**
+     * Get the current active subscription.
+     */
+    public function currentSubscription(): BelongsTo
+    {
+        return $this->belongsTo(TenantSubscription::class, 'current_subscription_id');
     }
 
     /**

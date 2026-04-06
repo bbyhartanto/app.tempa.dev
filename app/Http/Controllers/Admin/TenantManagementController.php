@@ -30,7 +30,8 @@ class TenantManagementController extends Controller
             $query->where('status', $status);
         }
 
-        $tenants = $query->orderBy('created_at', 'desc')
+        $tenants = $query->with('currentSubscription.plan')
+            ->orderBy('created_at', 'desc')
             ->paginate(20)
             ->through(fn($t) => [
                 'id' => $t->id,
@@ -39,6 +40,19 @@ class TenantManagementController extends Controller
                 'store_link' => $t->store_link,
                 'email' => $t->email,
                 'status' => $t->status,
+                'subscription_status' => $t->subscription_status,
+                'trial_ends_at' => $t->trial_ends_at?->toIso8601String(),
+                'item_limit' => $t->item_limit,
+                'current_subscription' => $t->currentSubscription ? [
+                    'id' => $t->currentSubscription->id,
+                    'end_date' => $t->currentSubscription->end_date->format('Y-m-d'),
+                    'days_remaining' => $t->currentSubscription->daysRemaining(),
+                    'plan' => [
+                        'tier' => $t->currentSubscription->plan->tier,
+                        'tier_label' => $t->currentSubscription->plan->tier_label,
+                        'billing_cycle_label' => $t->currentSubscription->plan->billing_cycle_label,
+                    ]
+                ] : null,
                 'template_slug' => $t->template_slug,
                 'created_at' => $t->created_at->toIso8601String(),
                 'approved_at' => $t->approved_at?->toIso8601String(),
