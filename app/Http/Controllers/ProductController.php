@@ -68,7 +68,22 @@ class ProductController extends Controller
      */
     public function create(): Response
     {
-        return Inertia::render('Dashboard/Products/Create');
+        $tenant = $this->getCurrentTenant();
+        $subscriptionService = app(\App\Services\SubscriptionService::class);
+        
+        $currentProductCount = $tenant->products()->count();
+        $itemLimit = $tenant->item_limit;
+        $remainingSlots = max(0, $itemLimit - $currentProductCount);
+        
+        return Inertia::render('Dashboard/Products/Create', [
+            'subscription' => [
+                'can_add_products' => $remainingSlots > 0,
+                'current_product_count' => $currentProductCount,
+                'item_limit' => $itemLimit,
+                'remaining_slots' => $remainingSlots,
+                'subscription_status' => $tenant->subscription_status,
+            ],
+        ]);
     }
 
     /**

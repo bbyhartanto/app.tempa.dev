@@ -6,6 +6,10 @@ const props = defineProps({
         type: Object,
         required: true,
     },
+    subscription: {
+        type: Object,
+        required: true,
+    },
 });
 
 function logout() {
@@ -42,6 +46,36 @@ function logout() {
             >
                 {{ tenant.status }}
             </span>
+        </div>
+
+        <!-- Subscription Status -->
+        <div class="bg-white px-4 py-3 border-b">
+            <div class="flex items-center justify-between mb-2">
+                <h3 class="text-sm font-medium text-gray-700">Subscription Status</h3>
+                <span :class="subscription.badge_class" class="px-2 py-1 rounded text-xs font-medium">
+                    {{ subscription.status_label }}
+                </span>
+            </div>
+            <div class="grid grid-cols-2 gap-3 text-xs">
+                <div>
+                    <span class="text-gray-500">Product Usage:</span>
+                    <div class="text-sm font-medium mt-1">
+                        {{ subscription.remaining_slots }} / {{ tenant.item_limit }} slots remaining
+                    </div>
+                </div>
+                <div v-if="subscription.summary.current_subscription">
+                    <span class="text-gray-500">Ends:</span>
+                    <div class="text-sm font-medium mt-1">
+                        {{ subscription.summary.current_subscription.end_date }}
+                    </div>
+                </div>
+                <div v-if="subscription.summary.trial_days_remaining !== null">
+                    <span class="text-gray-500">Trial Ends:</span>
+                    <div class="text-sm font-medium mt-1">
+                        {{ subscription.summary.trial_days_remaining }} days remaining
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Menu Grid -->

@@ -45,11 +45,16 @@ class DashboardController extends Controller
     public function index(Request $request): Response
     {
         $tenant = $this->getCurrentTenant();
+        $subscriptionService = app(\App\Services\SubscriptionService::class);
 
         // Get stats
         $productCount = $tenant->products()->count();
         $availableProductCount = $tenant->products()->available()->count();
         $orderCount = $tenant->orderLogs()->recent()->count();
+        
+        // Get subscription info
+        $subscriptionSummary = $subscriptionService->getSubscriptionSummary($tenant);
+        $remainingSlots = $subscriptionService->getRemainingItemSlots($tenant);
 
         return Inertia::render('Dashboard/Home', [
             'tenant' => [
@@ -57,12 +62,20 @@ class DashboardController extends Controller
                 'name' => $tenant->name,
                 'store_link' => $tenant->store_link,
                 'status' => $tenant->status,
+                'subscription_status' => $tenant->subscription_status,
+                'item_limit' => $tenant->item_limit,
                 'logo_url' => $tenant->logo_url,
             ],
             'stats' => [
                 'total_products' => $productCount,
                 'available_products' => $availableProductCount,
                 'recent_orders' => $orderCount,
+            ],
+            'subscription' => [
+                'summary' => $subscriptionSummary,
+                'remaining_slots' => $remainingSlots,
+                'status_label' => $subscriptionService->getStatusLabel($tenant),
+                'badge_class' => $subscriptionService->getLabelClass($tenant),
             ],
         ]);
     }

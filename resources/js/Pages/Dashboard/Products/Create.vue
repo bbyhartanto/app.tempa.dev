@@ -2,6 +2,13 @@
 import { ref } from 'vue';
 import { router } from '@inertiajs/vue3';
 
+const props = defineProps({
+    subscription: {
+        type: Object,
+        required: true,
+    },
+});
+
 const form = ref({
     title: '',
     description: '',
@@ -75,6 +82,35 @@ function removeImage(index) {
 
         <!-- Form -->
         <main class="p-4">
+            <!-- Subscription Limit Warning -->
+            <div v-if="!subscription.can_add_products" class="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+                <div class="flex items-start">
+                    <svg class="w-5 h-5 text-red-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    <div class="ml-3">
+                        <h3 class="text-sm font-medium text-red-900">Product Limit Reached</h3>
+                        <div class="mt-2 text-sm text-red-800">
+                            <p>You've used all {{ subscription.item_limit }} product slots. Please upgrade your subscription to add more products.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div v-else-if="subscription.remaining_slots <= 5" class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+                <div class="flex items-start">
+                    <svg class="w-5 h-5 text-yellow-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    <div class="ml-3">
+                        <h3 class="text-sm font-medium text-yellow-900">Limited Slots Remaining</h3>
+                        <div class="mt-2 text-sm text-yellow-800">
+                            <p>{{ subscription.remaining_slots }} of {{ subscription.item_limit }} product slots remaining.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <form @submit.prevent="submit" class="space-y-4">
                 <div class="bg-white rounded-lg shadow p-4 space-y-4">
                     <div>
@@ -179,11 +215,12 @@ function removeImage(index) {
                     <a href="/dashboard/products" class="flex-1 py-3 border border-gray-300 text-gray-700 text-center font-medium rounded-lg">
                         Cancel
                     </a>
-                    <button 
-                        type="submit" 
-                        class="flex-1 py-3 bg-blue-600 text-white font-medium rounded-lg"
+                    <button
+                        type="submit"
+                        :disabled="!subscription.can_add_products"
+                        class="flex-1 py-3 bg-blue-600 text-white font-medium rounded-lg disabled:bg-gray-300 disabled:cursor-not-allowed"
                     >
-                        Create Product
+                        {{ subscription.can_add_products ? 'Create Product' : 'Product Limit Reached' }}
                     </button>
                 </div>
             </form>
