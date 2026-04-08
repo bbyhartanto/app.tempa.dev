@@ -23,18 +23,8 @@ class SubscriptionManagementController extends Controller
      */
     public function show(Tenant $tenant)
     {
-        $summary = $this->subscriptionService->getSubscriptionSummary($tenant);
-        $availablePlans = $this->subscriptionService->getAvailablePlans();
-
-        return Inertia::render('Admin/Tenants/Subscription', [
-            'tenant' => [
-                'id' => $tenant->id,
-                'name' => $tenant->name,
-                'subscription_status' => $tenant->subscription_status,
-            ],
-            'summary' => $summary,
-            'available_plans' => $availablePlans,
-        ]);
+        // Redirect back to tenant list since subscription is managed via modal
+        return redirect()->route('admin.tenants.index');
     }
 
     /**
