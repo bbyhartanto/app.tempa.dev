@@ -63,6 +63,10 @@ Route::middleware(['auth', 'tenant'])->prefix('dashboard')->name('dashboard.')->
     Route::put('/settings', [DashboardController::class, 'updateSettings'])
         ->name('settings.update');
 
+    // Tenant subscription request
+    Route::post('/subscription/request', [DashboardController::class, 'requestSubscription'])
+        ->name('subscription.request');
+
     // Links management
     Route::get('/links', [DashboardController::class, 'links'])
         ->name('links.index');
@@ -160,6 +164,16 @@ Route::middleware(['auth', 'role:super_admin'])->prefix('admin')->name('admin.')
 
     Route::post('/tenants/{tenant}/subscription/extend-trial', [SubscriptionManagementController::class, 'extendTrial'])
         ->name('tenants.subscription.extend-trial');
+
+    // Subscription request workflow (tenant requests, admin approves)
+    Route::post('/tenants/{tenant}/subscription/request', [SubscriptionManagementController::class, 'requestSubscription'])
+        ->name('tenants.subscription.request');
+
+    Route::post('/tenants/{tenant}/subscription/approve', [SubscriptionManagementController::class, 'approveRequest'])
+        ->name('tenants.subscription.approve');
+
+    Route::post('/tenants/{tenant}/subscription/reject', [SubscriptionManagementController::class, 'rejectRequest'])
+        ->name('tenants.subscription.reject');
 
     // Pricing configuration
     Route::get('/pricing', [PricingController::class, 'index'])

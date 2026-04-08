@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Tenant;
 use App\Models\OrderLog;
+use App\Services\SubscriptionService;
 use App\Services\TemplateEngine;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -63,6 +64,7 @@ class DashboardController extends Controller
                 'store_link' => $tenant->store_link,
                 'status' => $tenant->status,
                 'subscription_status' => $tenant->subscription_status,
+                'subscription_request_status' => $tenant->subscription_request_status ?? 'none',
                 'item_limit' => $tenant->item_limit,
                 'logo_url' => $tenant->logo_url,
             ],
@@ -77,6 +79,7 @@ class DashboardController extends Controller
                 'status_label' => $subscriptionService->getStatusLabel($tenant),
                 'badge_class' => $subscriptionService->getLabelClass($tenant),
             ],
+            'availablePlans' => $subscriptionService->getAvailablePlans(),
         ]);
     }
 
@@ -207,5 +210,22 @@ class DashboardController extends Controller
         $tenant->update($validated);
 
         return redirect()->back()->with('success', 'Links updated successfully');
+    }
+
+    /**
+     * Tenant requests subscription activation
+     */
+    public function requestSubscription(Request $request, SubscriptionService $subscriptionService)
+    {
+        $tenant = $this->getCurrentTenant();
+
+        $validated = $request->validate([
+            'plan_id' => 'required|exists:subscription_plans,id',
+            'billing_cycle' => 'required|in:3_months,1_year',
+        ]);
+
+        $subscriptionService->requestSubscription($tenant, $validated['plan_id'], $validated['billing_cycle']);
+
+        return redirect()->back()->with('success', 'Subscription request submitted! Admin will review your request.');
     }
 }

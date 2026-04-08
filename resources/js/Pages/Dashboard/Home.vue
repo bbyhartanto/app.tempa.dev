@@ -1,5 +1,7 @@
 <script setup>
+import { ref } from 'vue';
 import { router } from '@inertiajs/vue3';
+import SubscriptionRequestModal from '@/Components/Tenant/SubscriptionRequestModal.vue';
 
 const props = defineProps({
     tenant: {
@@ -10,7 +12,13 @@ const props = defineProps({
         type: Object,
         required: true,
     },
+    availablePlans: {
+        type: Array,
+        required: true,
+    },
 });
+
+const showRequestModal = ref(false);
 
 function logout() {
     router.post(route('logout'));
@@ -76,6 +84,33 @@ function logout() {
                     </div>
                 </div>
             </div>
+            
+            <!-- CTA Button -->
+            <div v-if="tenant.subscription_status !== 'subscribed'" class="mt-3 pt-3 border-t">
+                <!-- Show request button only if no pending request exists -->
+                <div v-if="tenant.subscription_request_status === 'none' || tenant.subscription_request_status === 'rejected'">
+                    <button 
+                        @click="showRequestModal = true"
+                        class="w-full py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-sm font-medium rounded-lg hover:from-blue-700 hover:to-blue-800 transition shadow-sm"
+                    >
+                        <template v-if="tenant.subscription_status === 'trial'">
+                            🚀 Activate Subscription
+                        </template>
+                        <template v-else-if="tenant.subscription_status === 'expired'">
+                            🔄 Renew Subscription
+                        </template>
+                        <template v-else>
+                            ⬆️ Upgrade Subscription
+                        </template>
+                    </button>
+                </div>
+                <!-- Show pending message if request is pending -->
+                <div v-else-if="tenant.subscription_request_status === 'pending'" class="text-center">
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                        ⏳ Request Pending Admin Approval
+                    </span>
+                </div>
+            </div>
         </div>
 
         <!-- Menu Grid -->
@@ -123,5 +158,13 @@ function logout() {
                 </a>
             </div>
         </main>
+
+        <!-- Subscription Request Modal -->
+        <SubscriptionRequestModal 
+            :show="showRequestModal" 
+            :tenant-id="tenant.id"
+            :available-plans="availablePlans"
+            @close="showRequestModal = false" 
+        />
     </div>
 </template>

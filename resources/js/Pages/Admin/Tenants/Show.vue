@@ -1,12 +1,58 @@
 <script setup>
+import { ref } from 'vue';
+import { router } from '@inertiajs/vue3';
 import { Link } from '@inertiajs/vue3';
+import SubscriptionModal from '@/Components/Admin/SubscriptionModal.vue';
 
 const props = defineProps({
     tenant: {
         type: Object,
         required: true,
     },
+    availablePlans: {
+        type: Array,
+        default: () => [],
+    },
 });
+
+const showSubscriptionModal = ref(false);
+const isProcessing = ref(false);
+
+function approveSubscriptionRequest() {
+    if (!confirm('Approve and activate subscription for this tenant?')) return;
+    
+    isProcessing.value = true;
+    router.post(
+        route('admin.tenants.subscription.approve', props.tenant.id),
+        {},
+        {
+            onSuccess: () => {
+                isProcessing.value = false;
+            },
+            onError: () => {
+                isProcessing.value = false;
+            },
+        }
+    );
+}
+
+function rejectSubscriptionRequest() {
+    if (!confirm('Reject this subscription request?')) return;
+    
+    isProcessing.value = true;
+    router.post(
+        route('admin.tenants.subscription.reject', props.tenant.id),
+        {},
+        {
+            onSuccess: () => {
+                isProcessing.value = false;
+            },
+            onError: () => {
+                isProcessing.value = false;
+            },
+        }
+    );
+}
 </script>
 
 <template>
@@ -116,6 +162,62 @@ const props = defineProps({
                         </div>
                     </div>
 
+                    <!-- Subscription Request (Pending) -->
+                    <div v-if="tenant.subscription_request_status === 'pending'" class="bg-white rounded-lg shadow p-6 border-2 border-orange-200">
+                        <h2 class="text-lg font-bold text-gray-900 mb-2">⚠️ Pending Subscription Request</h2>
+                        
+                        <!-- Requested Plan Details -->
+                        <div v-if="tenant.requested_plan" class="bg-gray-50 rounded-lg p-4 mb-4">
+                            <div class="space-y-2 text-sm">
+                                <div class="flex justify-between">
+                                    <span class="text-gray-500">Plan:</span>
+                                    <span class="font-medium text-gray-900">{{ tenant.requested_plan.tier_label }}</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-500">Item Limit:</span>
+                                    <span class="font-medium text-gray-900">{{ tenant.requested_plan.item_limit }} products</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-500">Billing Cycle:</span>
+                                    <span class="font-medium text-gray-900">{{ tenant.requested_billing_cycle === '3_months' ? '3 Bulan' : '1 Tahun' }}</span>
+                                </div>
+                                <div class="flex justify-between pt-2 border-t">
+                                    <span class="text-gray-500 font-medium">Subscription Price:</span>
+                                    <span class="font-bold text-lg text-blue-600">{{ tenant.requested_plan.formatted_price }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="text-xs text-gray-500 mb-4">
+                            <div v-if="tenant.subscription_requested_at">
+                                📅 Requested: {{ new Date(tenant.subscription_requested_at).toLocaleString() }}
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-2">
+                            <button
+                                @click="approveSubscriptionRequest"
+                                :disabled="isProcessing"
+                                class="w-full py-2 px-4 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                            >
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                </svg>
+                                {{ isProcessing ? 'Processing...' : 'Approve & Activate' }}
+                            </button>
+                            <button
+                                @click="rejectSubscriptionRequest"
+                                :disabled="isProcessing"
+                                class="w-full py-2 px-4 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                            >
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                                {{ isProcessing ? 'Processing...' : 'Reject Request' }}
+                            </button>
+                        </div>
+                    </div>
+
                     <!-- Quick Actions -->
                     <div class="bg-white rounded-lg shadow p-6">
                         <h2 class="text-lg font-bold text-gray-900 mb-4">Quick Actions</h2>
@@ -128,12 +230,12 @@ const props = defineProps({
                                 View Storefront
                             </a>
                             
-                            <Link 
-                                :href="route('admin.tenants.subscription.show', tenant.id)"
+                            <button 
+                                @click="showSubscriptionModal = true"
                                 class="block w-full py-2 px-4 bg-purple-600 text-white text-center rounded-lg text-sm font-medium hover:bg-purple-700"
                             >
                                 Manage Subscription
-                            </Link>
+                            </button>
 
                             <template v-if="tenant.status === 'pending'">
                                 <button class="w-full py-2 px-4 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700">
@@ -151,5 +253,13 @@ const props = defineProps({
                 </div>
             </div>
         </main>
+
+        <!-- Subscription Modal -->
+        <SubscriptionModal 
+            :show="showSubscriptionModal" 
+            :tenant="tenant"
+            :available-plans="availablePlans"
+            @close="showSubscriptionModal = false" 
+        />
     </div>
 </template>

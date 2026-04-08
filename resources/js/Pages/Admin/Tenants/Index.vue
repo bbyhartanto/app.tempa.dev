@@ -16,6 +16,10 @@ const props = defineProps({
         type: Array,
         default: () => [],
     },
+    pendingRequestsCount: {
+        type: Number,
+        default: 0,
+    },
 });
 
 const statusFilter = ref(props.filters.status || 'all');
@@ -109,8 +113,16 @@ function getDaysRemaining(tenant) {
     <div class="min-h-screen bg-gray-100">
         <!-- Header -->
         <header class="bg-white shadow">
-            <div class="max-w-7xl mx-auto px-4 py-4">
-                <h1 class="text-xl font-bold text-gray-900">Tenant Management</h1>
+            <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+                <div class="flex items-center gap-4">
+                    <h1 class="text-xl font-bold text-gray-900">Tenant Management</h1>
+                    <!-- Pending Requests Badge -->
+                    <div v-if="pendingRequestsCount > 0" class="relative">
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-orange-100 text-orange-800">
+                            🔔 {{ pendingRequestsCount }} Pending Request{{ pendingRequestsCount > 1 ? 's' : '' }}
+                        </span>
+                    </div>
+                </div>
             </div>
         </header>
 
@@ -166,11 +178,18 @@ function getDaysRemaining(tenant) {
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
-                        <tr v-for="tenant in tenants.data" :key="tenant.id">
+                        <tr v-for="tenant in tenants.data" :key="tenant.id" class="hover:bg-gray-50">
                             <td class="px-6 py-4">
-                                <div>
-                                    <div class="text-sm font-medium text-gray-900">{{ tenant.name }}</div>
-                                    <div class="text-sm text-gray-500">/{{ tenant.store_link }}</div>
+                                <div class="flex items-center gap-2">
+                                    <div>
+                                        <div class="text-sm font-medium text-gray-900">{{ tenant.name }}</div>
+                                        <div class="text-sm text-gray-500">/{{ tenant.store_link }}</div>
+                                    </div>
+                                    <!-- Red Dot for Pending Request -->
+                                    <div v-if="tenant.subscription_request_status === 'pending'" class="relative flex-shrink-0">
+                                        <span class="absolute inline-flex h-3 w-3 rounded-full bg-red-500 opacity-75 animate-ping"></span>
+                                        <span class="relative inline-flex h-3 w-3 rounded-full bg-red-600"></span>
+                                    </div>
                                 </div>
                             </td>
                             <td class="px-6 py-4">

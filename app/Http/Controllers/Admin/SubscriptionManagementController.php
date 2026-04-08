@@ -113,4 +113,68 @@ class SubscriptionManagementController extends Controller
 
         return redirect()->back()->with('success', 'Subscription renewed successfully!');
     }
+
+    /**
+     * Tenant requests subscription activation.
+     */
+    public function requestSubscription(Request $request, Tenant $tenant)
+    {
+        $validated = $request->validate([
+            'plan_id' => 'required|exists:subscription_plans,id',
+            'billing_cycle' => 'required|in:3_months,1_year',
+        ]);
+
+        $tenant->update([
+            'subscription_request_status' => 'pending',
+            'requested_plan_id' => $validated['plan_id'],
+            'requested_billing_cycle' => $validated['billing_cycle'],
+            'subscription_requested_at' => now(),
+        ]);
+
+        return redirect()->back()->with('success', 'Subscription request submitted! Admin will review your request.');
+    }
+
+    /**
+     * Admin approves a subscription request.
+     */
+    public function approveRequest(Request $request, Tenant $tenant)
+    {
+        if ($tenant->subscription_request_status !== 'pending') {
+            return redirect()->back()->with('error', 'No pending subscription request.');
+        }
+
+        // Activate the subscription
+        $this->subscriptionService->activateSubscription(
+            $tenant,
+            $tenant->requested_plan_id,
+            now()
+        );
+
+        // Clear the request
+        $tenant->update([
+            'subscription_request_status' => 'approved',
+            'requested_plan_id' => null,
+            'requested_billing_cycle' => null,
+        ]);
+
+        return redirect()->back()->with('success', 'Subscription request approved and activated!');
+    }
+
+    /**
+     * Admin rejects a subscription request.
+     */
+    public function rejectRequest(Request $request, Tenant $tenant)
+    {
+        if ($tenant->subscription_request_status !== 'pending') {
+            return redirect()->back()->with('error', 'No pending subscription request.');
+        }
+
+        $tenant->update([
+            'subscription_request_status' => 'rejected',
+            'requested_plan_id' => null,
+            'requested_billing_cycle' => null,
+        ]);
+
+        return redirect()->back()->with('success', 'Subscription request rejected.');
+    }
 }

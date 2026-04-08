@@ -33,9 +33,13 @@ class Tenant extends Model
         'store_links',
         'status',
         'subscription_status',
+        'subscription_request_status',
         'trial_started_at',
         'trial_ends_at',
         'current_subscription_id',
+        'requested_plan_id',
+        'requested_billing_cycle',
+        'subscription_requested_at',
         'item_limit',
         'approved_at',
     ];
@@ -47,6 +51,7 @@ class Tenant extends Model
         'approved_at' => 'datetime',
         'trial_started_at' => 'datetime',
         'trial_ends_at' => 'datetime',
+        'subscription_requested_at' => 'datetime',
         'item_limit' => 'integer',
     ];
 

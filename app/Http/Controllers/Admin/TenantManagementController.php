@@ -49,6 +49,7 @@ class TenantManagementController extends Controller
                 'email' => $t->email,
                 'status' => $t->status,
                 'subscription_status' => $t->subscription_status,
+                'subscription_request_status' => $t->subscription_request_status ?? 'none',
                 'trial_ends_at' => $t->trial_ends_at?->toIso8601String(),
                 'item_limit' => $t->item_limit,
                 'current_subscription' => $t->currentSubscription ? [
@@ -72,6 +73,7 @@ class TenantManagementController extends Controller
                 'status' => $status,
             ],
             'availablePlans' => $this->subscriptionService->getAvailablePlans(),
+            'pendingRequestsCount' => Tenant::where('subscription_request_status', 'pending')->count(),
         ]);
     }
 
@@ -94,6 +96,24 @@ class TenantManagementController extends Controller
                 'logo_url' => $tenant->logo_url,
                 'description' => $tenant->description,
                 'status' => $tenant->status,
+                'subscription_status' => $tenant->subscription_status,
+                'subscription_request_status' => $tenant->subscription_request_status ?? 'none',
+                'subscription_requested_at' => $tenant->subscription_requested_at?->toIso8601String(),
+                'requested_plan_id' => $tenant->requested_plan_id,
+                'requested_billing_cycle' => $tenant->requested_billing_cycle,
+                'requested_plan' => $tenant->requested_plan_id ? \App\Models\SubscriptionPlan::find($tenant->requested_plan_id) : null,
+                'trial_ends_at' => $tenant->trial_ends_at?->toIso8601String(),
+                'item_limit' => $tenant->item_limit,
+                'current_subscription' => $tenant->currentSubscription ? [
+                    'id' => $tenant->currentSubscription->id,
+                    'end_date' => $tenant->currentSubscription->end_date->format('Y-m-d'),
+                    'days_remaining' => $tenant->currentSubscription->daysRemaining(),
+                    'plan' => [
+                        'tier' => $tenant->currentSubscription->plan->tier,
+                        'tier_label' => $tenant->currentSubscription->plan->tier_label,
+                        'billing_cycle_label' => $tenant->currentSubscription->plan->billing_cycle_label,
+                    ]
+                ] : null,
                 'template_slug' => $tenant->template_slug,
                 'settings' => $tenant->settings,
                 'created_at' => $tenant->created_at->toIso8601String(),
@@ -101,6 +121,7 @@ class TenantManagementController extends Controller
                 'products_count' => $tenant->products->count(),
                 'orders_count' => $tenant->orderLogs->count(),
             ],
+            'availablePlans' => $this->subscriptionService->getAvailablePlans(),
         ]);
     }
 

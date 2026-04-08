@@ -275,4 +275,17 @@ class SubscriptionService
         $plan->update(['price' => $price]);
         return $plan;
     }
+
+    /**
+     * Tenant requests a subscription activation.
+     */
+    public function requestSubscription(Tenant $tenant, int $planId, string $billingCycle): void
+    {
+        $tenant->update([
+            'subscription_request_status' => 'pending',
+            'requested_plan_id' => $planId,
+            'requested_billing_cycle' => $billingCycle,
+            'subscription_requested_at' => now(),
+        ]);
+    }
 }
