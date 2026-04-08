@@ -19,27 +19,33 @@ class SubscriptionManagementController extends Controller
     }
 
     /**
-     * Get tenant subscription details (JSON API for modal).
+     * Get tenant subscription details.
      */
     public function show(Tenant $tenant)
     {
         $summary = $this->subscriptionService->getSubscriptionSummary($tenant);
         $availablePlans = $this->subscriptionService->getAvailablePlans();
 
-        // Return JSON if requested via API, otherwise render Inertia page
-        if (request()->expectsJson() || request()->header('X-Inertia')) {
-            return response()->json([
-                'tenant' => [
-                    'id' => $tenant->id,
-                    'name' => $tenant->name,
-                    'subscription_status' => $tenant->subscription_status,
-                ],
-                'summary' => $summary,
-                'available_plans' => $availablePlans,
-            ]);
-        }
-
         return Inertia::render('Admin/Tenants/Subscription', [
+            'tenant' => [
+                'id' => $tenant->id,
+                'name' => $tenant->name,
+                'subscription_status' => $tenant->subscription_status,
+            ],
+            'summary' => $summary,
+            'available_plans' => $availablePlans,
+        ]);
+    }
+
+    /**
+     * Get tenant subscription details as JSON (for modal API).
+     */
+    public function getData(Tenant $tenant)
+    {
+        $summary = $this->subscriptionService->getSubscriptionSummary($tenant);
+        $availablePlans = $this->subscriptionService->getAvailablePlans();
+
+        return response()->json([
             'tenant' => [
                 'id' => $tenant->id,
                 'name' => $tenant->name,
