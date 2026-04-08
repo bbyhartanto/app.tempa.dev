@@ -12,6 +12,10 @@ const props = defineProps({
         type: Object,
         required: true,
     },
+    availablePlans: {
+        type: Array,
+        default: () => [],
+    },
 });
 
 const statusFilter = ref(props.filters.status || 'all');
@@ -266,10 +270,11 @@ function getDaysRemaining(tenant) {
         </main>
 
         <!-- Subscription Modal -->
-        <SubscriptionModal 
-            :show="showSubscriptionModal" 
+        <SubscriptionModal
+            :show="showSubscriptionModal"
             :tenant="selectedTenant"
-            @close="showSubscriptionModal = false" 
+            :available-plans="availablePlans"
+            @close="showSubscriptionModal = false"
         />
     </div>
 </template>

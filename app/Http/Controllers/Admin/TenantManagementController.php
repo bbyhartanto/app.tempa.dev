@@ -5,18 +5,26 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Tenant;
 use App\Models\Template;
+use App\Services\SubscriptionService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
 /**
  * Tenant Management Controller
- * 
+ *
  * Super admin functions for managing tenants.
  * Requires super_admin role.
  */
 class TenantManagementController extends Controller
 {
+    protected SubscriptionService $subscriptionService;
+
+    public function __construct(SubscriptionService $subscriptionService)
+    {
+        $this->subscriptionService = $subscriptionService;
+    }
+
     /**
      * Display listing of all tenants
      */
@@ -63,6 +71,7 @@ class TenantManagementController extends Controller
             'filters' => [
                 'status' => $status,
             ],
+            'availablePlans' => $this->subscriptionService->getAvailablePlans(),
         ]);
     }
 

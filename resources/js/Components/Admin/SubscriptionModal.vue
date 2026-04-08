@@ -11,6 +11,10 @@ const props = defineProps({
         type: Object,
         default: null,
     },
+    availablePlans: {
+        type: Array,
+        default: () => [],
+    },
 });
 
 const emit = defineEmits(['close']);
@@ -19,52 +23,7 @@ const selectedPlanId = ref(null);
 const startDate = ref(new Date().toISOString().split('T')[0]);
 const isLoading = ref(false);
 
-const plans = ref([
-    {
-        id: 1,
-        tier: 'basic',
-        tier_label: 'Basic (0-25 items)',
-        billing_cycle: '3_months',
-        billing_cycle_label: '3 Bulan',
-        price: 50000,
-        formatted_price: 'Rp 50.000',
-        item_limit: 25,
-        duration_months: 3,
-    },
-    {
-        id: 2,
-        tier: 'basic',
-        tier_label: 'Basic (0-25 items)',
-        billing_cycle: '1_year',
-        billing_cycle_label: '1 Tahun',
-        price: 150000,
-        formatted_price: 'Rp 150.000',
-        item_limit: 25,
-        duration_months: 12,
-    },
-    {
-        id: 3,
-        tier: 'standard',
-        tier_label: 'Standard (0-60 items)',
-        billing_cycle: '3_months',
-        billing_cycle_label: '3 Bulan',
-        price: 100000,
-        formatted_price: 'Rp 100.000',
-        item_limit: 60,
-        duration_months: 3,
-    },
-    {
-        id: 4,
-        tier: 'standard',
-        tier_label: 'Standard (0-60 items)',
-        billing_cycle: '1_year',
-        billing_cycle_label: '1 Tahun',
-        price: 350000,
-        formatted_price: 'Rp 350.000',
-        item_limit: 60,
-        duration_months: 12,
-    },
-]);
+const plans = computed(() => props.availablePlans || []);
 
 const selectedPlan = computed(() => {
     return plans.value.find(p => p.id === selectedPlanId.value);
