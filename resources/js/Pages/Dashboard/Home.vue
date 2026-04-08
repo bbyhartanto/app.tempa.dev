@@ -64,27 +64,37 @@ function logout() {
                     {{ subscription.status_label }}
                 </span>
             </div>
-            <div class="grid grid-cols-2 gap-3 text-xs">
+            
+            <!-- Active Subscription Plan Details -->
+            <div v-if="tenant.current_plan" class="mt-3 p-4 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg">
+                <div class="text-xs font-medium text-green-800 mb-2">✅ Active Plan:</div>
+                <div class="flex items-center justify-between">
+                    <div>
+                        <div class="text-base font-bold text-green-900">{{ tenant.current_plan.name }}</div>
+                        <div class="text-xs text-green-700 mt-1">📅 {{ tenant.current_plan.billing_cycle }}</div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-2xl font-bold text-green-900">{{ tenant.current_plan.price }}</div>
+                        <div class="text-xs text-green-700 mt-1">📦 {{ tenant.current_plan.item_limit }} product slots</div>
+                    </div>
+                </div>
+                <div class="mt-3 pt-2 border-t border-green-200 flex items-center justify-between text-xs">
+                    <span class="text-green-700">📅 Valid until: {{ tenant.current_plan.end_date }}</span>
+                    <span :class="tenant.current_plan.days_remaining <= 7 ? 'text-red-600 font-bold' : 'text-green-800 font-bold'">
+                        {{ tenant.current_plan.days_remaining }} days left
+                    </span>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-1 gap-3 text-xs mt-3">
                 <div>
                     <span class="text-gray-500">Product Usage:</span>
                     <div class="text-sm font-medium mt-1">
                         {{ subscription.remaining_slots }} / {{ tenant.item_limit }} slots remaining
                     </div>
                 </div>
-                <div v-if="subscription.summary.current_subscription">
-                    <span class="text-gray-500">Ends:</span>
-                    <div class="text-sm font-medium mt-1">
-                        {{ subscription.summary.current_subscription.end_date }}
-                    </div>
-                </div>
-                <div v-if="subscription.summary.trial_days_remaining !== null">
-                    <span class="text-gray-500">Trial Ends:</span>
-                    <div class="text-sm font-medium mt-1">
-                        {{ subscription.summary.trial_days_remaining }} days remaining
-                    </div>
-                </div>
             </div>
-            
+
             <!-- CTA Button -->
             <div v-if="tenant.subscription_status !== 'subscribed'" class="mt-3 pt-3 border-t">
                 <!-- Show request button only if no pending request exists -->
@@ -105,10 +115,22 @@ function logout() {
                     </button>
                 </div>
                 <!-- Show pending message if request is pending -->
-                <div v-else-if="tenant.subscription_request_status === 'pending'" class="text-center">
+                <div v-else-if="tenant.subscription_request_status === 'pending'" class="text-center space-y-2">
                     <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
                         ⏳ Request Pending Admin Approval
                     </span>
+                    <!-- Show requested plan details -->
+                    <div v-if="tenant.requested_plan" class="mt-2 p-3 bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-lg">
+                        <div class="text-sm font-medium text-purple-900 mb-1">Requested Plan:</div>
+                        <div class="flex items-center justify-between text-sm">
+                            <span class="text-purple-700">{{ tenant.requested_plan.name }}</span>
+                            <span class="font-bold text-purple-900 text-lg">{{ tenant.requested_plan.price }}</span>
+                        </div>
+                        <div class="flex items-center justify-between text-xs text-purple-600 mt-1">
+                            <span>📅 {{ tenant.requested_plan.billing_cycle }}</span>
+                            <span>📦 {{ tenant.requested_plan.item_limit }} product slots</span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

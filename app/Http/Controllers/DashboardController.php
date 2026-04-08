@@ -56,6 +56,34 @@ class DashboardController extends Controller
         // Get subscription info
         $subscriptionSummary = $subscriptionService->getSubscriptionSummary($tenant);
         $remainingSlots = $subscriptionService->getRemainingItemSlots($tenant);
+        
+        // Get current active subscription plan details
+        $currentPlanInfo = null;
+        if ($tenant->currentSubscription && $tenant->currentSubscription->plan) {
+            $plan = $tenant->currentSubscription->plan;
+            $currentPlanInfo = [
+                'name' => $plan->tier_label,
+                'price' => $plan->formatted_price,
+                'billing_cycle' => $plan->billing_cycle_label,
+                'item_limit' => $plan->item_limit,
+                'end_date' => $tenant->currentSubscription->end_date->format('d M Y'),
+                'days_remaining' => $tenant->currentSubscription->daysRemaining(),
+            ];
+        }
+        
+        // Get requested plan details if pending
+        $requestedPlanInfo = null;
+        if ($tenant->subscription_request_status === 'pending' && $tenant->requested_plan_id) {
+            $requestedPlan = \App\Models\SubscriptionPlan::find($tenant->requested_plan_id);
+            if ($requestedPlan) {
+                $requestedPlanInfo = [
+                    'name' => $requestedPlan->tier_label,
+                    'price' => $requestedPlan->formatted_price,
+                    'billing_cycle' => $requestedPlan->billing_cycle_label,
+                    'item_limit' => $requestedPlan->item_limit,
+                ];
+            }
+        }
 
         return Inertia::render('Dashboard/Home', [
             'tenant' => [
@@ -65,6 +93,8 @@ class DashboardController extends Controller
                 'status' => $tenant->status,
                 'subscription_status' => $tenant->subscription_status,
                 'subscription_request_status' => $tenant->subscription_request_status ?? 'none',
+                'requested_plan' => $requestedPlanInfo,
+                'current_plan' => $currentPlanInfo,
                 'item_limit' => $tenant->item_limit,
                 'logo_url' => $tenant->logo_url,
             ],
