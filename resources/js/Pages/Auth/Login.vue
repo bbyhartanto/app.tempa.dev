@@ -24,7 +24,7 @@ function submit() {
     <div class="min-h-screen bg-gray-100 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
         <div class="sm:mx-auto sm:w-full sm:max-w-md">
             <h1 class="text-center text-3xl font-bold text-gray-900">
-                E-Catalog SaaS
+                Pesanin Beta
             </h1>
             <p class="mt-2 text-center text-sm text-gray-600">
                 Sign in to your account
@@ -123,13 +123,13 @@ function submit() {
                 </div>
 
                 <!-- Demo Credentials -->
-                <div class="mt-6 pt-6 border-t">
+                <!-- <div class="mt-6 pt-6 border-t">
                     <p class="text-xs text-gray-500 text-center mb-2">Demo Credentials</p>
                     <div class="text-xs text-gray-600 space-y-1">
                         <p><strong>Super Admin:</strong> admin@platform.com / password</p>
                         <p><strong>Tenant:</strong> hello@kopisenja.com / password</p>
                     </div>
-                </div>
+                </div> -->
             </div>
         </div>
     </div>
