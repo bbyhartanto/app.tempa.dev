@@ -1,6 +1,9 @@
 <script setup>
-import { ref } from 'vue';
-import { Head, Link, useForm } from '@inertiajs/vue3';
+import { computed } from 'vue';
+import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
+
+const page = usePage();
+const status = computed(() => page.props.flash?.status);
 
 const form = useForm({
     email: '',
@@ -30,6 +33,13 @@ function submit() {
 
         <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
             <div class="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+                <div
+                    v-if="status"
+                    class="mb-4 rounded-md border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800"
+                >
+                    {{ status }}
+                </div>
+
                 <form @submit.prevent="submit" class="space-y-6">
                     <div>
                         <label for="email" class="block text-sm font-medium text-gray-700">Email address</label>
@@ -72,6 +82,13 @@ function submit() {
                             />
                             <label for="remember" class="ml-2 block text-sm text-gray-900">Remember me</label>
                         </div>
+
+                        <Link
+                            :href="route('password.request')"
+                            class="text-sm font-medium text-blue-600 hover:text-blue-500"
+                        >
+                            Forgot password?
+                        </Link>
                     </div>
 
                     <div>
