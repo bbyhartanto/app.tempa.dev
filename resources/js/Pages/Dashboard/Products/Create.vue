@@ -1,6 +1,7 @@
 <script setup>
 import { ref } from 'vue';
 import { router } from '@inertiajs/vue3';
+import TenantDashboardHeader from '@/Components/navigation/TenantDashboardHeader.vue';
 
 const props = defineProps({
     subscription: {
@@ -16,6 +17,7 @@ const form = ref({
     currency: 'IDR',
     images: [],
     is_available: true,
+    dine_in_enabled: false,
     sort_order: 0,
 });
 
@@ -67,18 +69,7 @@ function removeImage(index) {
 
 <template>
     <div class="min-h-screen bg-gray-50">
-        <!-- Header -->
-        <header class="bg-blue-600 text-white px-4 py-3 sticky top-0 z-10">
-            <div class="flex items-center justify-between">
-                <a href="/dashboard/products" class="text-white/80 hover:text-white">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-                    </svg>
-                </a>
-                <h1 class="text-lg font-bold">Add Product</h1>
-                <div class="w-8"></div>
-            </div>
-        </header>
+        <TenantDashboardHeader title="Add Product" :back-url="route('dashboard.products.index')" />
 
         <!-- Form -->
         <main class="p-4">
@@ -201,13 +192,24 @@ function removeImage(index) {
                     </div>
 
                     <div class="flex items-center">
-                        <input 
-                            v-model="form.is_available" 
-                            type="checkbox" 
-                            id="is_available" 
+                        <input
+                            v-model="form.is_available"
+                            type="checkbox"
+                            id="is_available"
                             class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                         />
                         <label for="is_available" class="ml-2 block text-sm text-gray-700">Available for sale</label>
+                    </div>
+
+                    <div class="flex items-center">
+                        <input
+                            v-model="form.dine_in_enabled"
+                            type="checkbox"
+                            id="dine_in_enabled"
+                            class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                        />
+                        <label for="dine_in_enabled" class="ml-2 block text-sm text-gray-700">Available for Dine-In Menu</label>
+                        <p class="ml-2 text-xs text-gray-500">Show this product in the dine-in menu on storefront</p>
                     </div>
                 </div>
 

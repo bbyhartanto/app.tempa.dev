@@ -30,6 +30,8 @@ class Tenant extends Model
         'opening_schedule',
         'template_slug',
         'settings',
+        'enabled_modules',
+        'onboarding_completed',
         'store_links',
         'status',
         'subscription_status',
@@ -47,12 +49,14 @@ class Tenant extends Model
     protected $casts = [
         'opening_schedule' => 'array',
         'settings' => 'array',
+        'enabled_modules' => 'array',
         'store_links' => 'array',
         'approved_at' => 'datetime',
         'trial_started_at' => 'datetime',
         'trial_ends_at' => 'datetime',
         'subscription_requested_at' => 'datetime',
         'item_limit' => 'integer',
+        'onboarding_completed' => 'boolean',
     ];
 
     protected static function boot()
@@ -86,6 +90,22 @@ class Tenant extends Model
     public function availableProducts(): HasMany
     {
         return $this->hasMany(Product::class)->where('is_available', true)->orderBy('sort_order');
+    }
+
+    /**
+     * Get services for this tenant.
+     */
+    public function services(): HasMany
+    {
+        return $this->hasMany(Service::class);
+    }
+
+    /**
+     * Get available services only (for storefront).
+     */
+    public function availableServices(): HasMany
+    {
+        return $this->hasMany(Service::class)->where('is_available', true)->orderBy('sort_order');
     }
 
     /**
@@ -177,13 +197,13 @@ class Tenant extends Model
 
         $now = now();
         $day = strtolower($now->format('l')); // monday, tuesday, etc.
-        
+
         if (!isset($this->opening_schedule[$day])) {
             return true;
         }
 
         $schedule = $this->opening_schedule[$day];
-        
+
         if (isset($schedule['closed']) && $schedule['closed']) {
             return false;
         }
@@ -193,5 +213,124 @@ class Tenant extends Model
         $closeTime = $schedule['close'] ?? '23:59';
 
         return $currentTime >= $openTime && $currentTime <= $closeTime;
+    }
+
+    // ============================================================
+    // Module Management Helpers
+    // ============================================================
+
+    /**
+     * Get enabled modules as array.
+     */
+    public function getModulesAttribute(): array
+    {
+        return $this->enabled_modules ?? ['catalog'];
+    }
+
+    /**
+     * Check if a specific module is enabled.
+     */
+    public function hasModule(string $module): bool
+    {
+        return in_array($module, $this->modules, true);
+    }
+
+    /**
+     * Check if catalog module is enabled.
+     */
+    public function hasCatalog(): bool
+    {
+        return $this->hasModule('catalog');
+    }
+
+    /**
+     * Check if dine-in menu module is enabled.
+     * Requires catalog to be enabled first.
+     */
+    public function hasDineIn(): bool
+    {
+        return $this->hasModule('catalog') && $this->hasModule('dine_in');
+    }
+
+    /**
+     * Check if booking module is enabled.
+     */
+    public function hasBooking(): bool
+    {
+        return $this->hasModule('booking');
+    }
+
+    /**
+     * Check if tenant can enable a module based on their tier.
+     * Free tier: only 1 module allowed.
+     * Premium tier: both allowed.
+     */
+    public function canEnableModule(string $module): bool
+    {
+        if ($this->hasModule($module)) {
+            return true; // Already enabled
+        }
+
+        $currentModules = $this->modules;
+        $isPremium = $this->isPremium();
+
+        // Free tier: only allow 1 module
+        if (!$isPremium && count($currentModules) >= 1) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Enable a module for this tenant.
+     */
+    public function enableModule(string $module): bool
+    {
+        if (!$this->canEnableModule($module)) {
+            return false;
+        }
+
+        $modules = $this->modules;
+        if (!in_array($module, $modules, true)) {
+            $modules[] = $module;
+            $this->update(['enabled_modules' => $modules]);
+        }
+
+        return true;
+    }
+
+    /**
+     * Disable a module for this tenant (cannot disable last module).
+     */
+    public function disableModule(string $module): bool
+    {
+        $modules = $this->modules;
+
+        // Cannot disable the last module
+        if (count($modules) <= 1 && in_array($module, $modules, true)) {
+            return false;
+        }
+
+        $modules = array_values(array_diff($modules, [$module]));
+        $this->update(['enabled_modules' => $modules]);
+
+        return true;
+    }
+
+    /**
+     * Check if tenant is on premium (premium = subscription_status = 'premium').
+     */
+    public function isPremium(): bool
+    {
+        return $this->subscription_status === 'premium';
+    }
+
+    /**
+     * Get the primary (first enabled) module type.
+     */
+    public function getPrimaryModule(): ?string
+    {
+        return $this->modules[0] ?? 'catalog';
     }
 }

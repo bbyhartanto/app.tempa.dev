@@ -8,6 +8,7 @@ use App\Services\SubscriptionService;
 use App\Services\TemplateEngine;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -97,6 +98,7 @@ class DashboardController extends Controller
                 'current_plan' => $currentPlanInfo,
                 'item_limit' => $tenant->item_limit,
                 'logo_url' => $tenant->logo_url,
+                'enabled_modules' => $tenant->enabled_modules ?? ['catalog'],
             ],
             'stats' => [
                 'total_products' => $productCount,
@@ -123,7 +125,7 @@ class DashboardController extends Controller
         $availableTemplates = $this->templateEngine->getAvailableTemplates();
         $currentTemplateConfig = $this->templateEngine->getConfig($tenant);
 
-        return Inertia::render('Dashboard/Settings', [
+        return Inertia::render('Dashboard/Settings/Index', [
             'tenant' => [
                 'id' => $tenant->id,
                 'name' => $tenant->name,
@@ -143,8 +145,51 @@ class DashboardController extends Controller
                 'template_slug' => $tenant->template_slug,
                 'settings' => $tenant->settings,
                 'store_links' => $tenant->store_links ?? [],
+                'enabled_modules' => $tenant->enabled_modules ?? ['catalog'],
                 'status' => $tenant->status,
                 'store_link' => $tenant->store_link,
+                'subscription_status' => $tenant->subscription_status,
+            ],
+            'availableTemplates' => $availableTemplates,
+            'templateConfig' => $currentTemplateConfig,
+            'isPremium' => $tenant->isPremium(),
+        ]);
+    }
+
+    /**
+     * Display location page
+     */
+    public function locationPage(Request $request): Response
+    {
+        $tenant = $this->getCurrentTenant();
+
+        return Inertia::render('Dashboard/Location/Index', [
+            'tenant' => [
+                'id' => $tenant->id,
+                'name' => $tenant->name,
+                'address' => $tenant->address,
+                'city' => $tenant->city,
+                'province' => $tenant->province,
+                'google_maps_link' => $tenant->google_maps_link,
+            ],
+        ]);
+    }
+
+    /**
+     * Display template page
+     */
+    public function templatePage(Request $request): Response
+    {
+        $tenant = $this->getCurrentTenant();
+
+        $availableTemplates = $this->templateEngine->getAvailableTemplates();
+        $currentTemplateConfig = $this->templateEngine->getConfig($tenant);
+
+        return Inertia::render('Dashboard/Template/Index', [
+            'tenant' => [
+                'id' => $tenant->id,
+                'name' => $tenant->name,
+                'template_slug' => $tenant->template_slug,
             ],
             'availableTemplates' => $availableTemplates,
             'templateConfig' => $currentTemplateConfig,
@@ -163,14 +208,16 @@ class DashboardController extends Controller
             'email' => 'sometimes|email|max:255|unique:tenants,email,' . $tenant->id,
             'phone' => 'sometimes|nullable|string|max:20',
             'whatsapp_number' => 'sometimes|nullable|string|max:20',
-            'logo_url' => 'sometimes|nullable|url|max:500',
-            'background_image' => 'sometimes|nullable|url|max:500',
+            'logo_url' => 'sometimes|nullable|string|max:500',
+            'logo_file' => 'sometimes|nullable|image|mimes:jpeg,png,webp,svg|max:2048',
+            'remove_logo' => 'sometimes|boolean',
+            'background_image' => 'sometimes|nullable|string|max:500',
             'description' => 'sometimes|nullable|string|max:1000',
             'address' => 'sometimes|nullable|string|max:255',
             'city' => 'sometimes|nullable|string|max:100',
             'province' => 'sometimes|nullable|string|max:100',
             'streetname' => 'sometimes|nullable|string|max:255',
-            'google_maps_link' => 'sometimes|nullable|url|max:500',
+            'google_maps_link' => 'sometimes|nullable|string|max:500',
             'latitude' => 'sometimes|nullable|numeric',
             'longitude' => 'sometimes|nullable|numeric',
             'opening_schedule' => 'sometimes|nullable|array',
@@ -178,6 +225,28 @@ class DashboardController extends Controller
             'settings' => 'sometimes|nullable|array',
             'store_links' => 'sometimes|nullable|array',
         ]);
+
+        // Handle logo upload
+        if ($request->hasFile('logo_file')) {
+            // Delete old logo if it's a stored file (not a URL)
+            if ($tenant->logo_url && !str_starts_with($tenant->logo_url, 'http')) {
+                Storage::disk('public')->delete($tenant->logo_url);
+            }
+
+            $path = $request->file('logo_file')->store('logos', 'public');
+            $validated['logo_url'] = Storage::url($path);
+        }
+
+        // Handle logo removal
+        if (!empty($validated['remove_logo'])) {
+            if ($tenant->logo_url && !str_starts_with($tenant->logo_url, 'http')) {
+                Storage::disk('public')->delete($tenant->logo_url);
+            }
+            $validated['logo_url'] = null;
+        }
+
+        unset($validated['logo_file']);
+        unset($validated['remove_logo']);
 
         $tenant->update($validated);
 
@@ -257,5 +326,35 @@ class DashboardController extends Controller
         $subscriptionService->requestSubscription($tenant, $validated['plan_id'], $validated['billing_cycle']);
 
         return redirect()->back()->with('success', 'Subscription request submitted! Admin will review your request.');
+    }
+
+    /**
+     * Update enabled modules for tenant.
+     */
+    public function updateModules(Request $request)
+    {
+        $tenant = $this->getCurrentTenant();
+
+        $validated = $request->validate([
+            'modules' => 'required|array|min:0',
+            'modules.*' => 'required|string|in:catalog,booking,dine_in',
+        ]);
+
+        $modules = array_values(array_unique($validated['modules']));
+
+        // Check if tenant can have this many modules (dine_in doesn't count as it's a sub-feature of catalog)
+        $mainModules = array_filter($modules, fn($m) => $m !== 'dine_in');
+        $isPremium = $tenant->isPremium();
+        if (!$isPremium && count($mainModules) > 1) {
+            return redirect()->back()
+                ->with('error', 'Free tier tenants can only enable one module at a time. Upgrade to Premium to enable multiple modules.');
+        }
+
+        $tenant->update([
+            'enabled_modules' => $modules,
+            'onboarding_completed' => true, // Mark as completed when they manually set modules
+        ]);
+
+        return redirect()->back()->with('success', 'Modules updated successfully.');
     }
 }

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\Builder;
 
 class OrderItem extends Model
@@ -13,6 +14,8 @@ class OrderItem extends Model
     protected $fillable = [
         'order_id',
         'product_id',
+        'orderable_type',
+        'orderable_id',
         'product_name',
         'product_sku',
         'original_quantity',
@@ -46,6 +49,14 @@ class OrderItem extends Model
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
+    }
+
+    /**
+     * Get the orderable entity (Product or Service).
+     */
+    public function orderable(): MorphTo
+    {
+        return $this->morphTo();
     }
 
     /**

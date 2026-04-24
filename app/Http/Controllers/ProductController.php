@@ -53,6 +53,7 @@ class ProductController extends Controller
                 'formatted_price' => $p->formatted_price,
                 'currency' => $p->currency,
                 'is_available' => $p->is_available,
+                'dine_in_enabled' => $p->dine_in_enabled,
                 'sort_order' => $p->sort_order,
                 'first_image' => $p->first_image,
                 'created_at' => $p->created_at->toIso8601String(),
@@ -102,6 +103,7 @@ class ProductController extends Controller
             'images' => 'nullable|array|max:1',
             'images.*' => 'image|mimes:jpeg,png,webp|max:10240', // Max 10MB per image
             'is_available' => 'boolean',
+            'dine_in_enabled' => 'boolean',
             'sort_order' => 'integer|min:0',
         ]);
 
@@ -118,6 +120,7 @@ class ProductController extends Controller
 
         $validated['tenant_id'] = $tenant->id;
         $validated['is_available'] = $validated['is_available'] ?? true;
+        $validated['dine_in_enabled'] = $validated['dine_in_enabled'] ?? false;
         $validated['sort_order'] = $validated['sort_order'] ?? 0;
         $validated['currency'] = $validated['currency'] ?? 'IDR';
 
@@ -157,6 +160,7 @@ class ProductController extends Controller
                 'currency' => $product->currency,
                 'images' => $product->image_urls,
                 'is_available' => $product->is_available,
+                'dine_in_enabled' => $product->dine_in_enabled,
                 'sort_order' => $product->sort_order,
                 'created_at' => $product->created_at->toIso8601String(),
                 'updated_at' => $product->updated_at->toIso8601String(),
@@ -182,6 +186,7 @@ class ProductController extends Controller
                 'currency' => $product->currency,
                 'images' => $product->images ?? [], // Raw storage paths for editing
                 'is_available' => $product->is_available,
+                'dine_in_enabled' => $product->dine_in_enabled,
                 'sort_order' => $product->sort_order,
             ],
         ]);
@@ -204,6 +209,7 @@ class ProductController extends Controller
             'images' => 'nullable|array|max:1',
             'images.*' => 'image|mimes:jpeg,png,webp|max:10240', // Max 10MB per image
             'is_available' => 'boolean',
+            'dine_in_enabled' => 'boolean',
             'sort_order' => 'integer|min:0',
             'remove_images' => 'nullable|array',
             'remove_images.*' => 'string',

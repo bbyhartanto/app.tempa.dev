@@ -21,6 +21,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'optional-auth' => \App\Http\Middleware\OptionalAuth::class,
             'role' => \App\Http\Middleware\RoleMiddleware::class,
             'tenant' => \App\Http\Middleware\TenantRole::class,
+            'onboarding' => \App\Http\Middleware\RequireOnboarding::class,
+            'require.module' => \App\Http\Middleware\RequireModule::class,
         ]);
 
         $middleware->redirectGuestsTo(fn () => route('login'));

@@ -1,12 +1,7 @@
 <script setup>
-import { ref, toRef } from 'vue';
 import { Head, Link } from '@inertiajs/vue3';
-import { useCartStore } from '@/Stores/cartStore';
-import { useCheckout } from '@/Composables/useCheckout';
-import FloatingCartButton from '@/Components/Storefront/FloatingCartButton.vue';
-import CartDrawer from '@/Components/Storefront/CartDrawer.vue';
-import CheckoutModal from '@/Components/Storefront/CheckoutModal.vue';
-import ProductSection from '@/Components/Storefront/ProductSection.vue';
+import CatalogModule from '@/Components/modules/CatalogModule.vue';
+import BookingModule from '@/Components/modules/BookingModule.vue';
 
 const props = defineProps({
     tenant: {
@@ -18,37 +13,25 @@ const props = defineProps({
         required: true,
         default: () => [],
     },
+    services: {
+        type: Array,
+        required: true,
+        default: () => [],
+    },
+    totalServices: {
+        type: Number,
+        required: true,
+        default: 0,
+    },
     templateConfig: {
         type: Object,
         required: true,
     },
 });
 
-// Use shared cart store
-const cart = useCartStore;
-
-// Cart drawer state
-const showCartDrawer = ref(false);
-
-function openCartDrawer() {
-    showCartDrawer.value = true;
-}
-
-function closeCartDrawer() {
-    showCartDrawer.value = false;
-}
-
-// Use checkout composable
-const tenantRef = toRef(props, 'tenant');
-const {
-    showCheckoutForm,
-    showSuccessModal,
-    lastOrderNumber,
-    lastReceiptUrl,
-    handleCheckout,
-    openCheckout,
-    closeSuccessModal,
-} = useCheckout(tenantRef, cart.formatCurrency, cart.clearCart);
+const enabledModules = props.tenant.modules || ['catalog'];
+const storeLink = props.tenant.store_link;
+const hasDineIn = enabledModules.includes('dine_in');
 </script>
 
 <template>
@@ -70,7 +53,7 @@ const {
                             <span class="ml-1">📍</span>
                         </div>
                     </div>
-                    
+
                     <!-- Logo -->
                     <div v-if="tenant.logo_url" class="w-20 h-20 rounded-full overflow-hidden bg-gray-200 flex-shrink-0 ml-4">
                         <img :src="tenant.logo_url" :alt="tenant.name" class="w-full h-full object-cover" />
@@ -131,48 +114,37 @@ const {
                             </div>
                         </a>
                     </template>
+
+                    <!-- Dine-In Menu Link (only if enabled) -->
+                    <Link
+                        v-if="hasDineIn"
+                        :href="route('storefront.dine-in', { store_link: storeLink })"
+                        class="block w-full py-4 px-5 bg-[#FFD76E] border-2 border-white rounded-full hover:bg-[#FFE08A] transition"
+                    >
+                        <div class="flex items-center justify-between">
+                            <span class="font-medium text-black text-lg">🍽️ Menu Dine In</span>
+                            <svg class="w-5 h-5 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 17L17 7M17 7H7m10 0v10" />
+                            </svg>
+                        </div>
+                    </Link>
                 </div>
             </div>
         </header>
 
-        <!-- Products Section -->
-        <ProductSection 
-            :products="products" 
+        <!-- Module: Catalog (Products) -->
+        <CatalogModule
+            v-if="enabledModules.includes('catalog')"
+            :products="products"
             :tenant="tenant"
-            @add-to-cart="cart.addToCart" 
         />
 
-        <!-- Floating Cart Button -->
-        <FloatingCartButton
-            v-if="!cart.isEmpty"
-            :cart-count="cart.cartCount"
-            @click="openCartDrawer"
-        />
-
-        <!-- Cart Drawer -->
-        <CartDrawer
-            :show="showCartDrawer"
-            :cart-items="cart.cartItems"
-            :cart-total="cart.cartTotal"
-            :cart-count="cart.cartCount"
-            :currency="products[0]?.currency || 'IDR'"
-            @close="closeCartDrawer"
-            @remove-item="cart.removeFromCart"
-            @update-quantity="({ productId, quantity }) => cart.updateQuantity(productId, quantity)"
-            @checkout="() => { closeCartDrawer(); openCheckout(); }"
-        />
-
-        <!-- Checkout Modal -->
-        <CheckoutModal
-            :show="showCheckoutForm"
-            :cart-items="cart.cartItems"
+        <!-- Module: Booking (Services) -->
+        <BookingModule
+            v-if="enabledModules.includes('booking')"
+            :services="services"
+            :total-services="totalServices"
             :tenant="tenant"
-            :show-success="showSuccessModal"
-            :order-number="lastOrderNumber"
-            :receipt-url="lastReceiptUrl"
-            @close="showCheckoutForm = false"
-            @submit="handleCheckout"
-            @close-success="closeSuccessModal"
         />
     </div>
 </template>

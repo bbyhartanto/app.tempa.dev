@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Str;
 
@@ -12,10 +13,13 @@ class Order extends Model
 {
     protected $fillable = [
         'tenant_id',
+        'module_type',
+        'orderable_type',
+        'orderable_id',
         'order_number',
         'customer_name',
         'customer_phone',
-        'customer_address',
+        'customer_instagram',
         'status',
         'payment_status',
         'original_subtotal',
@@ -24,6 +28,9 @@ class Order extends Model
         'total',
         'payment_notes',
         'shipping_receipt',
+        'booking_date',
+        'booking_time_slot',
+        'booking_duration_min',
         'adjustment_notes',
     ];
 
@@ -32,6 +39,8 @@ class Order extends Model
         'adjusted_subtotal' => 'decimal:2',
         'shipping_cost' => 'decimal:2',
         'total' => 'decimal:2',
+        'booking_date' => 'date',
+        'booking_duration_min' => 'integer',
     ];
 
     protected static function boot()
@@ -104,6 +113,67 @@ class Order extends Model
     public function items(): HasMany
     {
         return $this->hasMany(OrderItem::class);
+    }
+
+    /**
+     * Get the orderable entity (Product or Service).
+     */
+    public function orderable(): MorphTo
+    {
+        return $this->morphTo();
+    }
+
+    /**
+     * Check if this order is a booking.
+     */
+    public function isBooking(): bool
+    {
+        return $this->module_type === 'booking';
+    }
+
+    /**
+     * Check if this order is a catalog order.
+     */
+    public function isCatalog(): bool
+    {
+        return $this->module_type === 'catalog';
+    }
+
+    /**
+     * Get booking date formatted for display.
+     */
+    public function getFormattedBookingDateAttribute(): ?string
+    {
+        if (!$this->booking_date) {
+            return null;
+        }
+        return $this->booking_date->format('d M Y');
+    }
+
+    /**
+     * Get Google Calendar add-event URL.
+     */
+    public function getGoogleCalendarLinkAttribute(): ?string
+    {
+        if (!$this->isBooking() || !$this->booking_date || !$this->booking_time_slot) {
+            return null;
+        }
+
+        // Parse time slot "14:00-14:30"
+        $times = explode('-', $this->booking_time_slot);
+        if (count($times) !== 2) {
+            return null;
+        }
+
+        $date = $this->booking_date->format('Ymd');
+        $startTime = str_replace(':', '', $times[0]) . '00';
+        $endTime = str_replace(':', '', $times[1]) . '00';
+
+        $title = urlencode('Booking at ' . ($this->tenant->name ?? 'Store'));
+        $location = $this->tenant->address ? urlencode($this->tenant->address) : '';
+        $details = urlencode('Booking confirmed via WhatsApp. Order: ' . $this->order_number);
+
+        return "https://calendar.google.com/calendar/render?action=TEMPLATE&text={$title}&dates={$date}T{$startTime}/{$date}T{$endTime}&details={$details}&location={$location}";
     }
 
     /**

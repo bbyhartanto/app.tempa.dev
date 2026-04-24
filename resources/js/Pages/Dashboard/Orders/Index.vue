@@ -1,6 +1,7 @@
 <script setup>
 import { ref, watch } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
+import TenantDashboardHeader from '@/Components/navigation/TenantDashboardHeader.vue';
 
 const props = defineProps({
     orders: {
@@ -51,23 +52,7 @@ function goToPage(page) {
     <Head title="Orders" />
 
     <div class="min-h-screen bg-gray-50">
-        <!-- Header -->
-        <header class="bg-white shadow-sm">
-            <div class="max-w-7xl mx-auto px-4 py-4">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <h1 class="text-xl font-bold text-gray-900">Orders</h1>
-                        <p class="text-sm text-gray-500">{{ orders.total }} total orders</p>
-                    </div>
-                    <Link
-                        href="/dashboard"
-                        class="text-sm text-blue-600 hover:text-blue-700"
-                    >
-                        ← Back to Dashboard
-                    </Link>
-                </div>
-            </div>
-        </header>
+        <TenantDashboardHeader title="Orders" />
 
         <!-- Filters -->
         <div class="max-w-7xl mx-auto px-4 py-4">

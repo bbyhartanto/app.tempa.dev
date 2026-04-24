@@ -10,6 +10,8 @@ use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ReceiptController;
 use App\Http\Controllers\Dashboard\OrderController as DashboardOrderController;
 use App\Http\Controllers\Dashboard\OrderItemController as DashboardOrderItemController;
+use App\Http\Controllers\Dashboard\ServiceController as DashboardServiceController;
+use App\Http\Controllers\Dashboard\OnboardingController as DashboardOnboardingController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\StorefrontController;
 use App\Http\Middleware\ResolveTenant;
@@ -54,6 +56,16 @@ Route::get('/', function () {
 */
 
 Route::middleware(['auth', 'tenant'])->prefix('dashboard')->name('dashboard.')->group(function () {
+    // Onboarding (must be BEFORE onboarding middleware, no redirect loop)
+    Route::get('/onboarding', [DashboardOnboardingController::class, 'create'])
+        ->name('onboarding');
+
+    Route::post('/onboarding', [DashboardOnboardingController::class, 'store'])
+        ->name('onboarding.store');
+});
+
+// Dashboard routes requiring completed onboarding
+Route::middleware(['auth', 'tenant', 'onboarding'])->prefix('dashboard')->name('dashboard.')->group(function () {
     Route::get('/', [DashboardController::class, 'index'])
         ->name('home');
 
@@ -62,6 +74,18 @@ Route::middleware(['auth', 'tenant'])->prefix('dashboard')->name('dashboard.')->
 
     Route::put('/settings', [DashboardController::class, 'updateSettings'])
         ->name('settings.update');
+
+    // Location page
+    Route::get('/location', [DashboardController::class, 'locationPage'])
+        ->name('location');
+
+    // Template page
+    Route::get('/template', [DashboardController::class, 'templatePage'])
+        ->name('template');
+
+    // Module management
+    Route::post('/settings/modules', [DashboardController::class, 'updateModules'])
+        ->name('settings.modules.update');
 
     // Tenant subscription request
     Route::post('/subscription/request', [DashboardController::class, 'requestSubscription'])
@@ -74,6 +98,7 @@ Route::middleware(['auth', 'tenant'])->prefix('dashboard')->name('dashboard.')->
     Route::put('/links', [DashboardController::class, 'updateLinks'])
         ->name('links.update');
 
+    // Products (catalog module)
     Route::get('/products', [ProductController::class, 'index'])
         ->name('products.index');
 
@@ -94,6 +119,33 @@ Route::middleware(['auth', 'tenant'])->prefix('dashboard')->name('dashboard.')->
 
     Route::delete('/products/{product}', [ProductController::class, 'destroy'])
         ->name('products.destroy');
+
+    // Services (booking module)
+    Route::middleware(['require.module:booking'])->group(function () {
+        Route::get('/services', [DashboardServiceController::class, 'index'])
+            ->name('services.index');
+
+        Route::get('/services/create', [DashboardServiceController::class, 'create'])
+            ->name('services.create');
+
+        Route::post('/services', [DashboardServiceController::class, 'store'])
+            ->name('services.store');
+
+        Route::get('/services/{service}', [DashboardServiceController::class, 'show'])
+            ->name('services.show');
+
+        Route::get('/services/{service}/edit', [DashboardServiceController::class, 'edit'])
+            ->name('services.edit');
+
+        Route::put('/services/{service}', [DashboardServiceController::class, 'update'])
+            ->name('services.update');
+
+        Route::delete('/services/{service}', [DashboardServiceController::class, 'destroy'])
+            ->name('services.destroy');
+
+        Route::put('/services/{service}/toggle', [DashboardServiceController::class, 'toggleAvailability'])
+            ->name('services.toggle-availability');
+    });
 
     Route::post('/orders/log', [DashboardController::class, 'logOrder'])
         ->name('orders.log');
@@ -217,9 +269,21 @@ Route::middleware([ResolveTenant::class])->prefix('{store_link}')->name('storefr
     Route::get('/catalog/products', [StorefrontController::class, 'loadMoreProducts'])
         ->name('catalog.products.load-more');
 
+    // Dine-In Menu - Display Only (No Cart)
+    Route::get('/dine-in', [StorefrontController::class, 'dineInMenu'])
+        ->name('dine-in');
+
+    // Load More Dine-In Products (for infinite scroll)
+    Route::get('/dine-in/products', [StorefrontController::class, 'loadMoreDineInProducts'])
+        ->name('dine-in.products.load-more');
+
     // Product Detail
     Route::get('/products/{productSlug}', [StorefrontController::class, 'showProduct'])
         ->name('products.show');
+
+    // Service Detail (booking)
+    Route::get('/services/{serviceSlug}', [StorefrontController::class, 'showService'])
+        ->name('services.show');
 
     // Order Creation (API)
     Route::post('/orders', [OrderController::class, 'store'])

@@ -20,12 +20,14 @@ class Product extends Model
         'currency',
         'images',
         'is_available',
+        'dine_in_enabled',
         'sort_order',
     ];
 
     protected $casts = [
         'images' => 'array',
         'is_available' => 'boolean',
+        'dine_in_enabled' => 'boolean',
         'price' => 'decimal:2',
     ];
 
@@ -65,6 +67,14 @@ class Product extends Model
     public function scopeAvailable(Builder $query): Builder
     {
         return $query->where('is_available', true);
+    }
+
+    /**
+     * Scope for dine-in enabled products only.
+     */
+    public function scopeDineInEnabled(Builder $query): Builder
+    {
+        return $query->where('dine_in_enabled', true);
     }
 
     /**

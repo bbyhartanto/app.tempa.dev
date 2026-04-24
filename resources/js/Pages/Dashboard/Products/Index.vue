@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed } from 'vue';
 import { router } from '@inertiajs/vue3';
+import TenantDashboardHeader from '@/Components/navigation/TenantDashboardHeader.vue';
 
 const props = defineProps({
     products: {
@@ -28,18 +29,16 @@ function toggleAvailability(product) {
 
 <template>
     <div class="min-h-screen bg-gray-50">
-        <!-- Header -->
-        <header class="bg-blue-600 text-white px-4 py-3 sticky top-0 z-10">
-            <div class="flex items-center justify-between">
-                <a href="/dashboard" class="text-white/80 hover:text-white">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-                    </svg>
+        <TenantDashboardHeader title="Products" :back-url="route('dashboard.home')">
+            <template #actions>
+                <a
+                    href="/dashboard/products/create"
+                    class="text-sm font-medium text-blue-600 hover:text-blue-800"
+                >
+                    + Add
                 </a>
-                <h1 class="text-lg font-bold">Products</h1>
-                <a href="/dashboard/products/create" class="text-white text-sm font-medium">+ Add</a>
-            </div>
-        </header>
+            </template>
+        </TenantDashboardHeader>
 
         <!-- Search -->
         <div class="p-4 bg-white border-b">
