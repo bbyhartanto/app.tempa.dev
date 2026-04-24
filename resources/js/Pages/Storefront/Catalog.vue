@@ -8,6 +8,7 @@ import CatalogGrid from '@/Components/Storefront/CatalogGrid.vue';
 import FloatingCartButton from '@/Components/Storefront/FloatingCartButton.vue';
 import CartDrawer from '@/Components/Storefront/CartDrawer.vue';
 import CheckoutModal from '@/Components/Storefront/CheckoutModal.vue';
+import StorefrontBackground from '@/Components/Storefront/StorefrontBackground.vue';
 
 const props = defineProps({
     tenant: {
@@ -100,7 +101,8 @@ function handleFloatingCartClick() {
 <template>
     <Head :title="tenant.name" />
 
-    <div class="min-h-screen bg-white pb-24">
+    <StorefrontBackground :tenant="tenant">
+        <div class="min-h-screen pb-24">
         <!-- Header -->
         <CatalogHeader
             :store-name="tenant.name"
@@ -151,5 +153,8 @@ function handleFloatingCartClick() {
             @submit="handleCheckout"
             @close-success="closeSuccessModal"
         />
-    </div>
+        <!-- GlassiFy Web Component Injector -->
+        <glassi-fy v-if="tenant?.settings?.button_glass_effect"></glassi-fy>
+        </div>
+    </StorefrontBackground>
 </template>

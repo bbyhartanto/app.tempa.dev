@@ -40,13 +40,12 @@ class OnboardingController extends Controller
         $tenant = $this->resolveTenant();
 
         $validated = $request->validate([
-            'business_type' => 'required|in:catalog,booking,both',
+            'business_type' => 'required|in:catalog,booking',
         ]);
 
         $modules = match ($validated['business_type']) {
             'catalog' => ['catalog'],
             'booking' => ['booking'],
-            'both' => ['catalog', 'booking'],
         };
 
         $tenant->update([
@@ -54,14 +53,7 @@ class OnboardingController extends Controller
             'onboarding_completed' => true,
         ]);
 
-        // Redirect to the appropriate setup page
-        $redirectRoute = match ($validated['business_type']) {
-            'catalog' => route('dashboard.products.index'),
-            'booking' => route('dashboard.services.index'),
-            'both' => route('dashboard.products.index'),
-        };
-
-        return redirect($redirectRoute);
+        return redirect('/dashboard');
     }
 
     /**

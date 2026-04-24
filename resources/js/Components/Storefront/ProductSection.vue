@@ -1,4 +1,5 @@
 <script setup>
+import { computed } from 'vue';
 import { Link } from '@inertiajs/vue3';
 
 const props = defineProps({
@@ -14,13 +15,15 @@ const props = defineProps({
 
 const emit = defineEmits(['addToCart']);
 
+const isGlass = computed(() => props.tenant?.settings?.button_glass_effect || false);
+
 function handleAddToCart(product) {
     emit('addToCart', product);
 }
 </script>
 
 <template>
-    <section class="max-w-md mx-auto px-5 py-8 -mt-6 bg-white rounded-t-3xl">
+    <section :class="['max-w-md mx-auto px-5 py-8 -mt-6 rounded-t-3xl', isGlass ? 'glassify border-none' : 'bg-white']">
         <h2 class="text-2xl font-bold text-black mb-6">Products</h2>
 
         <div v-if="products.length === 0" class="text-center py-12">

@@ -152,7 +152,6 @@ class DashboardController extends Controller
             ],
             'availableTemplates' => $availableTemplates,
             'templateConfig' => $currentTemplateConfig,
-            'isPremium' => $tenant->isPremium(),
         ]);
     }
 
@@ -190,6 +189,8 @@ class DashboardController extends Controller
                 'id' => $tenant->id,
                 'name' => $tenant->name,
                 'template_slug' => $tenant->template_slug,
+                'settings' => $tenant->settings,
+                'background_image' => $tenant->background_image,
             ],
             'availableTemplates' => $availableTemplates,
             'templateConfig' => $currentTemplateConfig,
@@ -212,6 +213,8 @@ class DashboardController extends Controller
             'logo_file' => 'sometimes|nullable|image|mimes:jpeg,png,webp,svg|max:2048',
             'remove_logo' => 'sometimes|boolean',
             'background_image' => 'sometimes|nullable|string|max:500',
+            'background_file' => 'sometimes|nullable|image|mimes:jpeg,png,webp|max:5120',
+            'remove_background' => 'sometimes|boolean',
             'description' => 'sometimes|nullable|string|max:1000',
             'address' => 'sometimes|nullable|string|max:255',
             'city' => 'sometimes|nullable|string|max:100',
@@ -245,8 +248,27 @@ class DashboardController extends Controller
             $validated['logo_url'] = null;
         }
 
+        // Handle background upload
+        if ($request->hasFile('background_file')) {
+            if ($tenant->background_image && !str_starts_with($tenant->background_image, 'http')) {
+                Storage::disk('public')->delete($tenant->background_image);
+            }
+            $path = $request->file('background_file')->store('backgrounds', 'public');
+            $validated['background_image'] = Storage::url($path);
+        }
+
+        // Handle background removal
+        if (!empty($validated['remove_background'])) {
+            if ($tenant->background_image && !str_starts_with($tenant->background_image, 'http')) {
+                Storage::disk('public')->delete($tenant->background_image);
+            }
+            $validated['background_image'] = null;
+        }
+
         unset($validated['logo_file']);
         unset($validated['remove_logo']);
+        unset($validated['background_file']);
+        unset($validated['remove_background']);
 
         $tenant->update($validated);
 
@@ -342,12 +364,11 @@ class DashboardController extends Controller
 
         $modules = array_values(array_unique($validated['modules']));
 
-        // Check if tenant can have this many modules (dine_in doesn't count as it's a sub-feature of catalog)
+        // Enforce mutually exclusive main modules
         $mainModules = array_filter($modules, fn($m) => $m !== 'dine_in');
-        $isPremium = $tenant->isPremium();
-        if (!$isPremium && count($mainModules) > 1) {
+        if (count($mainModules) > 1) {
             return redirect()->back()
-                ->with('error', 'Free tier tenants can only enable one module at a time. Upgrade to Premium to enable multiple modules.');
+                ->with('error', 'You can only have one primary module active at a time (Catalog OR Booking).');
         }
 
         $tenant->update([

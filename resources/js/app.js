@@ -22,8 +22,8 @@ createInertiaApp({
         throw new Error(`Page not found: ${name}`);
     },
     setup({ el, App, props, plugin }) {
-        createApp({ render: () => h(App, props) })
-            .use(plugin)
+        const app = createApp({ render: () => h(App, props) });
+        app.use(plugin)
             .use(ZiggyVue)
             .mount(el);
     },

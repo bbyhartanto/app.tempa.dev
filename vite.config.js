@@ -10,7 +10,13 @@ export default defineConfig({
             refresh: true,
         }),
         tailwindcss(),
-        vue(),
+        vue({
+            template: {
+                compilerOptions: {
+                    isCustomElement: (tag) => tag === 'glassi-fy'
+                }
+            }
+        }),
     ],
     server: {
         host: '0.0.0.0',

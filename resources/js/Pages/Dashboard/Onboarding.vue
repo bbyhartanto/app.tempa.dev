@@ -105,27 +105,6 @@ function submit() {
                     </div>
                 </button>
 
-                <!-- Both (Premium) -->
-                <div
-                    class="w-full p-6 rounded-2xl border-2 border-gray-200 bg-gradient-to-r from-amber-50 to-orange-50 text-left relative"
-                >
-                    <div class="flex items-start space-x-4">
-                        <div class="flex-shrink-0 text-4xl">✨</div>
-                        <div class="flex-1">
-                            <div class="flex items-center space-x-2 mb-1">
-                                <h3 class="text-xl font-bold text-gray-900">
-                                    Both — I do both
-                                </h3>
-                                <span class="px-2 py-0.5 text-xs font-semibold bg-amber-200 text-amber-800 rounded-full">
-                                    Premium
-                                </span>
-                            </div>
-                            <p class="text-gray-600">
-                                Sell products AND book services — unlock with Premium plan
-                            </p>
-                        </div>
-                    </div>
-                </div>
 
                 <!-- Submit Button -->
                 <button

@@ -1,5 +1,6 @@
 <script setup>
 import { Link } from '@inertiajs/vue3';
+import CartAddButton from '@/Components/Storefront/CartAddButton.vue';
 
 const props = defineProps({
     product: {
@@ -44,14 +45,7 @@ defineEmits(['add-to-cart']);
             </div>
             
             <!-- Add Button -->
-            <button
-                @click="$emit('add-to-cart', product)"
-                class="flex-shrink-0 w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center hover:bg-gray-300 active:bg-gray-400 transition"
-            >
-                <svg class="w-5 h-5 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
-                </svg>
-            </button>
+            <CartAddButton :product="product" @click="$emit('add-to-cart', $event)" />
         </div>
     </div>
 </template>

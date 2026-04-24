@@ -1,5 +1,9 @@
 <script setup>
-import { Link } from '@inertiajs/vue3';
+import { computed } from 'vue';
+import { Link, usePage } from '@inertiajs/vue3';
+
+const page = usePage();
+const isGlass = computed(() => page.props.tenant?.settings?.button_glass_effect || false);
 
 const props = defineProps({
     storeName: {
@@ -18,7 +22,7 @@ const props = defineProps({
 </script>
 
 <template>
-    <header class="bg-white px-4 py-4 sticky top-0 z-40">
+    <header :class="['px-4 py-4 sticky top-0 z-40', isGlass ? 'glassify border-none' : 'bg-white']">
         <div class="flex items-start space-x-4">
             <!-- Back Button -->
             <Link :href="route('storefront.home', { store_link: storeLink })" class="flex-shrink-0 pt-1">

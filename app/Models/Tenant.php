@@ -260,25 +260,13 @@ class Tenant extends Model
         return $this->hasModule('booking');
     }
 
-    /**
-     * Check if tenant can enable a module based on their tier.
-     * Free tier: only 1 module allowed.
-     * Premium tier: both allowed.
-     */
     public function canEnableModule(string $module): bool
     {
         if ($this->hasModule($module)) {
             return true; // Already enabled
         }
 
-        $currentModules = $this->modules;
-        $isPremium = $this->isPremium();
-
-        // Free tier: only allow 1 module
-        if (!$isPremium && count($currentModules) >= 1) {
-            return false;
-        }
-
+        // Module exclusivity is enforced at the controller validation level
         return true;
     }
 
@@ -318,13 +306,7 @@ class Tenant extends Model
         return true;
     }
 
-    /**
-     * Check if tenant is on premium (premium = subscription_status = 'premium').
-     */
-    public function isPremium(): bool
-    {
-        return $this->subscription_status === 'premium';
-    }
+
 
     /**
      * Get the primary (first enabled) module type.

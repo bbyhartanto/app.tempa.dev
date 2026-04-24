@@ -1,6 +1,10 @@
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted, computed } from 'vue';
+import { usePage } from '@inertiajs/vue3';
 import ProductCardCatalog from './ProductCardCatalog.vue';
+
+const page = usePage();
+const isGlass = computed(() => page.props.tenant?.settings?.button_glass_effect || false);
 
 const props = defineProps({
     products: {
@@ -56,7 +60,7 @@ onUnmounted(() => {
         </div>
 
         <!-- Products Grid -->
-        <div v-else class="grid grid-cols-2 gap-x-4 gap-y-6">
+        <div v-else :class="['grid grid-cols-2 gap-x-4 gap-y-6', isGlass ? 'glassify p-5 rounded-2xl border-none' : '']">
             <ProductCardCatalog
                 v-for="product in products"
                 :key="product.id"

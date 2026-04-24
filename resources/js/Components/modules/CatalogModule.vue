@@ -6,6 +6,7 @@ import { useCheckout } from '@/Composables/useCheckout';
 import FloatingCartButton from '@/Components/Storefront/FloatingCartButton.vue';
 import CartDrawer from '@/Components/Storefront/CartDrawer.vue';
 import CheckoutModal from '@/Components/Storefront/CheckoutModal.vue';
+import CartAddButton from '@/Components/Storefront/CartAddButton.vue';
 
 const props = defineProps({
     products: {
@@ -53,12 +54,13 @@ function handleCartCheckout() {
     closeCartDrawer();
     openCheckout();
 }
+const isGlass = computed(() => props.tenant?.settings?.button_glass_effect || false);
 </script>
 
 <template>
     <section>
         <!-- Products Grid -->
-        <div class="max-w-md mx-auto px-5 py-8 -mt-6 bg-white rounded-t-3xl">
+        <div :class="['max-w-md mx-auto px-5 py-8 -mt-6 rounded-[26px]', isGlass ? 'glassify border-none' : 'bg-white']">
             <h2 class="text-2xl font-bold text-black mb-6">Products</h2>
 
             <div v-if="products.length === 0" class="text-center py-12">
@@ -97,14 +99,7 @@ function handleCartCheckout() {
                         </div>
 
                         <!-- Add to Cart Button -->
-                        <button
-                            @click="handleAddToCart(product)"
-                            class="flex-shrink-0 w-10 h-10 bg-[#FF8C42] rounded-full flex items-center justify-center hover:bg-[#FF9D5C] active:bg-[#FF7A33] transition"
-                        >
-                            <svg class="w-5 h-5 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
-                            </svg>
-                        </button>
+                        <CartAddButton :product="product" @click="handleAddToCart" />
                     </div>
                 </div>
             </div>

@@ -15,10 +15,6 @@ const props = defineProps({
         type: Object,
         required: true,
     },
-    isPremium: {
-        type: Boolean,
-        default: false,
-    },
 });
 
 const form = ref({
@@ -149,41 +145,42 @@ const modulesSaving = ref(false);
 const originalModules = ref([...enabledModules.value]);
 
 const modulesChanged = computed(() =>
-    JSON.stringify(enabledModules.value) !== JSON.stringify(originalModules.value)
+    JSON.stringify([...enabledModules.value].sort()) !== JSON.stringify([...originalModules.value].sort())
 );
 
-function toggleModule(module) {
-    const idx = enabledModules.value.indexOf(module);
+const primaryModule = computed({
+    get: () => enabledModules.value.includes('booking') ? 'booking' : 'catalog',
+    set: (val) => {
+        // If it's already the primary module, do nothing
+        if ((val === 'booking' && enabledModules.value.includes('booking')) || 
+            (val === 'catalog' && enabledModules.value.includes('catalog'))) {
+            return;
+        }
 
-    // If disabling a module
+        const moduleName = val === 'booking' ? 'Booking' : 'Catalog';
+        const hiddenItems = val === 'booking' ? 'products' : 'services';
+        const warningMessage = `⚠️ Warning: Changing your primary mode to ${moduleName} will hide all ${hiddenItems} from your storefront.\n\nAre you sure you want to continue?`;
+
+        if (!confirm(warningMessage)) {
+            return; // User cancelled
+        }
+
+        if (val === 'catalog') {
+            enabledModules.value = enabledModules.value.filter(m => m !== 'booking');
+            if (!enabledModules.value.includes('catalog')) enabledModules.value.push('catalog');
+        } else {
+            enabledModules.value = enabledModules.value.filter(m => m !== 'catalog' && m !== 'dine_in');
+            if (!enabledModules.value.includes('booking')) enabledModules.value.push('booking');
+        }
+    }
+});
+
+function toggleDineIn() {
+    const idx = enabledModules.value.indexOf('dine_in');
     if (idx > -1) {
-        // Don't allow disabling the last module
-        if (enabledModules.value.length <= 1 && module !== 'dine_in') return;
-
-        // If disabling catalog, also disable dine_in (depends on catalog)
-        if (module === 'catalog') {
-            const dineInIdx = enabledModules.value.indexOf('dine_in');
-            if (dineInIdx > -1) {
-                enabledModules.value.splice(dineInIdx, 1);
-            }
-        }
-
-        // Show confirmation warning (skip for dine_in)
-        if (module !== 'dine_in') {
-            const moduleName = module === 'booking' ? 'Booking' : 'Catalog';
-            const warningMessage = `⚠️ Warning: Disabling ${moduleName} will hide all ${module === 'booking' ? 'services' : 'products'} from your storefront.\n\nAre you sure you want to continue?`;
-
-            if (!confirm(warningMessage)) {
-                return; // User cancelled
-            }
-        }
-
         enabledModules.value.splice(idx, 1);
     } else {
-        // TODO: Re-enable premium restriction when ready
-        // Free tier: only 1 module allowed (dine_in doesn't count as it's a sub-feature)
-        // if (module !== 'dine_in' && !props.isPremium && enabledModules.value.filter(m => m !== 'dine_in').length >= 1) return;
-        enabledModules.value.push(module);
+        enabledModules.value.push('dine_in');
     }
 }
 
@@ -254,7 +251,7 @@ function requestUpgrade() {
                         <p class="text-sm text-gray-500 mb-4">Choose which features to enable for your storefront.</p>
 
                         <!-- Catalog Module -->
-                        <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg mb-3">
+                        <div class="flex items-center justify-between p-4 border rounded-lg mb-3" :class="primaryModule === 'catalog' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'">
                             <div class="flex items-center space-x-3">
                                 <span class="text-2xl">🛍️</span>
                                 <div>
@@ -264,17 +261,16 @@ function requestUpgrade() {
                             </div>
                             <label class="relative inline-flex items-center cursor-pointer">
                                 <input
-                                    type="checkbox"
-                                    :checked="enabledModules.includes('catalog')"
-                                    @change="toggleModule('catalog')"
-                                    class="sr-only peer"
+                                    type="radio"
+                                    value="catalog"
+                                    v-model="primaryModule"
+                                    class="w-5 h-5 text-blue-600 border-gray-300 focus:ring-blue-500"
                                 />
-                                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                             </label>
                         </div>
 
                         <!-- Dine-In Menu (Sub-feature of Catalog) -->
-                        <div v-if="enabledModules.includes('catalog')" class="flex items-center justify-between p-4 border border-orange-200 bg-orange-50 rounded-lg mb-3 ml-6">
+                        <div v-if="primaryModule === 'catalog'" class="flex items-center justify-between p-4 border border-orange-200 bg-orange-50 rounded-lg mb-3 ml-6">
                             <div class="flex items-center space-x-3">
                                 <span class="text-2xl">🍽️</span>
                                 <div>
@@ -286,7 +282,7 @@ function requestUpgrade() {
                                 <input
                                     type="checkbox"
                                     :checked="enabledModules.includes('dine_in')"
-                                    @change="toggleModule('dine_in')"
+                                    @change="toggleDineIn"
                                     class="sr-only peer"
                                 />
                                 <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-orange-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-500"></div>
@@ -294,7 +290,7 @@ function requestUpgrade() {
                         </div>
 
                         <!-- Booking Module -->
-                        <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg mb-3">
+                        <div class="flex items-center justify-between p-4 border rounded-lg mb-3" :class="primaryModule === 'booking' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'">
                             <div class="flex items-center space-x-3">
                                 <span class="text-2xl">📅</span>
                                 <div>
@@ -304,29 +300,13 @@ function requestUpgrade() {
                             </div>
                             <label class="relative inline-flex items-center cursor-pointer">
                                 <input
-                                    type="checkbox"
-                                    :checked="enabledModules.includes('booking')"
-                                    @change="toggleModule('booking')"
-                                    class="sr-only peer"
+                                    type="radio"
+                                    value="booking"
+                                    v-model="primaryModule"
+                                    class="w-5 h-5 text-blue-600 border-gray-300 focus:ring-blue-500"
                                 />
-                                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                             </label>
                         </div>
-
-                        <!-- Free tier warning (TODO: Re-enable when premium restrictions are active) -->
-                        <!-- <div v-if="!isPremium" class="bg-amber-50 border border-amber-200 rounded-lg p-4">
-                            <p class="text-sm text-amber-800">
-                                ⚠️ <strong>Free tier:</strong> You can only enable one module at a time.
-                                Upgrade to Premium to use both simultaneously.
-                            </p>
-                            <button
-                                v-if="!isPremium && enabledModules.includes('catalog') && !enabledModules.includes('booking')"
-                                @click="requestUpgrade"
-                                class="mt-2 text-sm font-medium text-amber-900 underline hover:text-amber-700"
-                            >
-                                Upgrade to Premium →
-                            </button>
-                        </div> -->
 
                         <button
                             type="button"
