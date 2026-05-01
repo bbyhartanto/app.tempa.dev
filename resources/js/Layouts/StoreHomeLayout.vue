@@ -46,7 +46,7 @@ const buttonGlassEffect = props.tenant.settings?.button_glass_effect || false;
                         <img :src="tenant.logo_url" :alt="tenant.name" class="w-full h-full object-cover" />
                     </div>
                     <div v-else class="w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0 ml-4">
-                        <svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 24 24">
+                        <svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                         </svg>
                     </div>

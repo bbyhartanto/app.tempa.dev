@@ -20,6 +20,7 @@ class Order extends Model
         'customer_name',
         'customer_phone',
         'customer_instagram',
+        'shipping_address',
         'status',
         'payment_status',
         'original_subtotal',

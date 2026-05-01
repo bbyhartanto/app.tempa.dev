@@ -114,6 +114,7 @@ class OrderController extends Controller
                 'customer_name' => $order->customer_name,
                 'customer_phone' => $order->customer_phone,
                 'customer_address' => $order->customer_address,
+                'shipping_address' => $order->shipping_address,
                 'status' => $order->status,
                 'status_color' => $order->status_color,
                 'payment_status' => $order->payment_status,

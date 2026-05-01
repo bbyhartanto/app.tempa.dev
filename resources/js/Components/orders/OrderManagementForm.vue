@@ -1,141 +1,84 @@
 <template>
-    <div class="bg-white rounded-lg shadow-sm p-6">
-        <h2 class="text-lg font-semibold text-gray-900 mb-4">Order Management</h2>
-
-        <div class="space-y-4">
-            <!-- Accept Order CTA (when status is pending) -->
-            <div v-if="order.status === 'pending'" class="bg-amber-50 border border-amber-200 rounded-lg p-4">
-                <div class="flex items-start gap-3">
-                    <div class="flex-shrink-0 text-2xl">📦</div>
-                    <div class="flex-1">
-                        <h3 class="text-sm font-semibold text-amber-900 mb-1">Order Awaiting Confirmation</h3>
-                        <p class="text-sm text-amber-700 mb-3">This order is waiting for your confirmation. Accept it to proceed with processing.</p>
-                        <button
-                            @click="$emit('accept-order')"
-                            class="px-6 py-2.5 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors"
-                        >
-                            ✓ Accept Order
-                        </button>
-                    </div>
+    <div class="space-y-6">
+        <!-- Accept Order CTA (when status is pending) -->
+        <div v-if="order.status === 'pending'" class="bg-amber-50/50 border-2 border-amber-100 rounded-[24px] p-6 shadow-sm">
+            <div class="flex items-start space-x-4">
+                <div class="w-12 h-12 rounded-xl bg-white flex items-center justify-center text-2xl shadow-sm border border-amber-100/50">
+                    📦
+                </div>
+                <div class="flex-1">
+                    <h3 class="text-[16px] font-black text-amber-900 mb-1 leading-tight">Confirmation Required</h3>
+                    <p class="text-[13px] font-bold text-amber-700/80 mb-4 leading-relaxed">This order is waiting for your approval to begin processing.</p>
+                    <button
+                        @click="$emit('accept-order')"
+                        class="w-full sm:w-auto px-8 py-3 bg-amber-600 text-white font-black text-[14px] uppercase tracking-wider rounded-xl hover:bg-amber-700 transition-all active:scale-95 shadow-lg shadow-amber-200"
+                    >
+                        Accept Order
+                    </button>
                 </div>
             </div>
+        </div>
 
-            <!-- Mark as Paid CTA (when status is confirmed) -->
-            <div v-if="order.status === 'confirmed'" class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <div class="flex items-start gap-3">
-                    <div class="flex-shrink-0 text-2xl">💰</div>
-                    <div class="flex-1">
-                        <h3 class="text-sm font-semibold text-blue-900 mb-1">Payment Confirmation</h3>
-                        <p class="text-sm text-blue-700 mb-3">Has the customer completed payment? Mark this order as paid.</p>
-                        <button
-                            @click="$emit('mark-as-paid')"
-                            class="px-6 py-2.5 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors"
-                        >
-                            ✓ Telah Lunas
-                        </button>
-                    </div>
+        <!-- Mark as Paid CTA (when status is confirmed) -->
+        <div v-if="order.status === 'confirmed'" class="bg-blue-50/50 border-2 border-blue-100 rounded-[24px] p-6 shadow-sm">
+            <div class="flex items-start space-x-4">
+                <div class="w-12 h-12 rounded-xl bg-white flex items-center justify-center text-2xl shadow-sm border border-blue-100/50">
+                    💰
+                </div>
+                <div class="flex-1">
+                    <h3 class="text-[16px] font-black text-blue-900 mb-1 leading-tight">Payment Received?</h3>
+                    <p class="text-[13px] font-bold text-blue-700/80 mb-4 leading-relaxed">Has the customer completed the payment? Mark it as paid to proceed.</p>
+                    <button
+                        @click="$emit('mark-as-paid')"
+                        class="w-full sm:w-auto px-8 py-3 bg-blue-600 text-white font-black text-[14px] uppercase tracking-wider rounded-xl hover:bg-blue-700 transition-all active:scale-95 shadow-lg shadow-blue-200"
+                    >
+                        Mark as Paid
+                    </button>
                 </div>
             </div>
+        </div>
 
-            <!-- Status -->
-            <div v-if="order.status !== 'pending' && order.status !== 'confirmed'">
-                <label class="block text-sm font-medium text-gray-700 mb-1">Order Status</label>
-                <select
-                    :value="form.status"
-                    @input="$emit('update:form', { ...form, status: $event.target.value })"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
-                >
-                    <option v-for="(label, value) in statusOptions" :key="value" :value="value">
-                        {{ label }}
-                    </option>
-                </select>
-            </div>
-
-            <!-- Payment Status (Hidden) -->
-            <div v-if="false">
-                <label class="block text-sm font-medium text-gray-700 mb-1">Payment Status</label>
-                <select
-                    :value="form.payment_status"
-                    @input="$emit('update:form', { ...form, payment_status: $event.target.value })"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
-                >
-                    <option value="unpaid">Unpaid</option>
-                    <option value="paid">Paid</option>
-                </select>
+        <div class="space-y-5">
+            <!-- Status Select -->
+            <div v-if="order.status !== 'pending' && order.status !== 'confirmed'" class="space-y-2">
+                <label class="text-[11px] font-black text-gray-400 uppercase tracking-widest ml-1">Order Status</label>
+                <div class="relative">
+                    <select
+                        :value="form.status"
+                        @input="$emit('update:form', { ...form, status: $event.target.value })"
+                        class="w-full bg-gray-50 border-2 border-transparent focus:border-gray-100 focus:bg-white px-5 py-4 rounded-2xl text-[15px] font-bold outline-none transition-all appearance-none cursor-pointer"
+                    >
+                        <option v-for="(label, value) in statusOptions" :key="value" :value="value">
+                            {{ label }}
+                        </option>
+                    </select>
+                    <div class="absolute inset-y-0 right-5 flex items-center pointer-events-none text-gray-300">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                    </div>
+                </div>
             </div>
 
             <!-- Shipping Cost -->
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Shipping Cost</label>
-                <input
-                    :value="form.shipping_cost"
-                    @input="$emit('update:form', { ...form, shipping_cost: Number($event.target.value) })"
-                    type="number"
-                    min="0"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
-                />
-            </div>
-
-            <!-- Payment Notes -->
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Payment Notes</label>
-                <textarea
-                    :value="form.payment_notes"
-                    @input="$emit('update:form', { ...form, payment_notes: $event.target.value })"
-                    rows="3"
-                    placeholder="Payment instructions for customer"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
-                />
-            </div>
-
-            <!-- Adjustment Notes (Hidden) -->
-            <div v-if="false">
-                <label class="block text-sm font-medium text-gray-700 mb-1">Adjustment Notes</label>
-                <textarea
-                    :value="form.adjustment_notes"
-                    @input="$emit('update:form', { ...form, adjustment_notes: $event.target.value })"
-                    rows="3"
-                    placeholder="Explain why order was modified (visible to customer)"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
-                />
-            </div>
-
-            <!-- Shipping Receipt Upload -->
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Shipping Receipt</label>
-                <input
-                    type="file"
-                    @change="$emit('file-change', $event)"
-                    accept="image/*,.pdf"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 text-sm"
-                />
-                <p v-if="order.shipping_receipt && !previewReceipt" class="mt-1 text-sm text-gray-500">
-                    Current: {{ order.shipping_receipt }}
-                </p>
-                <img
-                    v-if="previewReceipt"
-                    :src="previewReceipt"
-                    alt="Preview"
-                    class="mt-2 max-w-full h-auto rounded border"
-                />
-            </div>
-
-            <!-- Notes for History Log (Hidden) -->
-            <div v-if="false">
-                <label class="block text-sm font-medium text-gray-700 mb-1">Change Notes (optional)</label>
-                <input
-                    :value="form.notes"
-                    @input="$emit('update:form', { ...form, notes: $event.target.value })"
-                    type="text"
-                    placeholder="Brief description of changes (logged to history)"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 text-sm"
-                />
+            <div class="space-y-2">
+                <label class="text-[11px] font-black text-gray-400 uppercase tracking-widest ml-1">Shipping Cost</label>
+                <div class="relative group">
+                    <div class="absolute inset-y-0 left-5 flex items-center pointer-events-none font-bold text-gray-400 group-focus-within:text-black">
+                        Rp
+                    </div>
+                    <input
+                        :value="form.shipping_cost"
+                        @input="$emit('update:form', { ...form, shipping_cost: Number($event.target.value) })"
+                        type="number"
+                        min="0"
+                        class="w-full bg-gray-50 border-2 border-transparent focus:border-gray-100 focus:bg-white pl-12 pr-5 py-4 rounded-2xl text-[15px] font-bold outline-none transition-all"
+                    />
+                </div>
             </div>
 
             <!-- Save Button -->
             <button
                 @click="$emit('save')"
-                class="w-full py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700"
+                class="w-full py-5 bg-black text-white rounded-[24px] font-black text-[16px] hover:bg-gray-800 transition-all active:scale-95 shadow-xl shadow-gray-100 mt-2"
             >
                 Save Changes
             </button>

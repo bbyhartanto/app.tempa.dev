@@ -1,7 +1,6 @@
 <script setup>
-import { ref, watch } from 'vue';
+import { ref, computed } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
-import TenantDashboardHeader from '@/Components/navigation/TenantDashboardHeader.vue';
 
 const props = defineProps({
     orders: {
@@ -46,203 +45,152 @@ function goToPage(page) {
         preserveScroll: true,
     });
 }
+
+function handleBack() {
+    router.visit('/dashboard');
+}
+
+const getStatusStyles = (status) => {
+    switch (status) {
+        case 'pending': return 'bg-yellow-50 text-yellow-600 border-yellow-100';
+        case 'confirmed': return 'bg-blue-50 text-blue-600 border-blue-100';
+        case 'processing': return 'bg-purple-50 text-purple-600 border-purple-100';
+        case 'shipped': return 'bg-indigo-50 text-indigo-600 border-indigo-100';
+        case 'completed': return 'bg-green-50 text-green-600 border-green-100';
+        case 'cancelled': return 'bg-red-50 text-red-600 border-red-100';
+        default: return 'bg-gray-50 text-gray-600 border-gray-100';
+    }
+};
 </script>
 
 <template>
     <Head title="Orders" />
 
-    <div class="min-h-screen bg-gray-50">
-        <TenantDashboardHeader title="Orders" />
+    <div class="min-h-screen bg-white font-sans text-gray-900 pb-12">
+        <!-- Header -->
+        <header class="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b border-gray-100 px-6 py-4 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <button @click="handleBack" class="text-gray-400 hover:text-gray-600 transition-colors p-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                </button>
+                <h1 class="text-xl font-extrabold tracking-tight">Orders</h1>
+            </div>
+            <div class="flex items-center space-x-2">
+                <span class="text-[12px] font-black text-gray-300 uppercase tracking-widest">{{ orders.total }} Total</span>
+            </div>
+        </header>
 
-        <!-- Filters -->
-        <div class="max-w-7xl mx-auto px-4 py-4">
-            <div class="bg-white rounded-lg shadow-sm p-4">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <!-- Search -->
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Search</label>
-                        <input
-                            v-model="search"
+        <main class="max-w-md mx-auto px-6 py-8 space-y-6">
+            <!-- Filters Card -->
+            <div class="bg-white border-2 border-gray-50 rounded-[12px] p-6 shadow-[0_12px_40px_rgb(0,0,0,0.03)] space-y-5">
+                <div class="space-y-4">
+                    <div class="relative group">
+                        <div class="absolute inset-y-0 left-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-black transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                        </div>
+                        <input 
+                            v-model="search" 
+                            type="text" 
                             @keyup.enter="applyFilters"
-                            type="text"
-                            placeholder="Order # or customer name"
-                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                            placeholder="Order # or customer..." 
+                            class="w-full bg-gray-50 border-2 border-transparent focus:border-gray-100 focus:bg-white px-12 py-4 rounded-[10px] text-[15px] font-bold outline-none transition-all placeholder:text-gray-300"
                         />
                     </div>
 
-                    <!-- Status Filter -->
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                        <select
-                            v-model="status"
-                            @change="applyFilters"
-                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                        >
-                            <option value="">All Status</option>
-                            <option v-for="(label, value) in statusOptions" :key="value" :value="value">
-                                {{ label }}
-                            </option>
-                        </select>
-                    </div>
-
-                    <!-- Clear Button -->
-                    <div class="flex items-end">
-                        <button
+                    <div class="flex space-x-3">
+                        <div class="flex-1 relative">
+                            <select
+                                v-model="status"
+                                @change="applyFilters"
+                                class="w-full bg-gray-50 border-2 border-transparent focus:border-gray-100 focus:bg-white px-5 py-4 rounded-[10px] text-[15px] font-bold outline-none transition-all appearance-none cursor-pointer"
+                            >
+                                <option value="">All Status</option>
+                                <option v-for="(label, value) in statusOptions" :key="value" :value="value">
+                                    {{ label }}
+                                </option>
+                            </select>
+                            <div class="absolute inset-y-0 right-4 flex items-center pointer-events-none text-gray-300">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                            </div>
+                        </div>
+                        <button 
                             @click="clearFilters"
-                            class="w-full px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 text-sm font-medium"
+                            class="px-5 bg-gray-50 text-gray-400 rounded-[10px] font-bold text-[13px] hover:text-black transition-all active:scale-95"
                         >
-                            Clear Filters
+                            Reset
                         </button>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Orders Table -->
-        <main class="max-w-7xl mx-auto px-4 pb-8">
-            <div v-if="orders.data.length === 0" class="bg-white rounded-lg shadow-sm p-12 text-center">
-                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                <h3 class="mt-2 text-sm font-medium text-gray-900">No orders found</h3>
-                <p class="mt-1 text-sm text-gray-500">Orders from customers will appear here.</p>
+            <!-- Orders List -->
+            <div v-if="orders.data.length === 0" class="text-center py-20 space-y-6">
+                <div class="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mx-auto grayscale opacity-40 text-4xl">
+                    🧾
+                </div>
+                <div class="space-y-2">
+                    <p class="text-xl font-black text-gray-900">No orders found</p>
+                    <p class="text-gray-400 font-bold text-sm">Customer orders will appear here.</p>
+                </div>
             </div>
 
-            <div v-else class="bg-white shadow-sm rounded-lg overflow-hidden">
-                <!-- Desktop Table -->
-                <div class="hidden md:block overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order #</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Items</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-gray-200">
-                            <tr v-for="order in orders.data" :key="order.id" class="hover:bg-gray-50">
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm font-medium text-gray-900">{{ order.order_number }}</div>
-                                    <div v-if="order.is_modified" class="text-xs text-orange-600">Modified</div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm text-gray-900">{{ order.customer_name }}</div>
-                                    <div class="text-sm text-gray-500">{{ order.customer_phone }}</div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    {{ order.created_at_formatted }}
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <span
-                                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
-                                        :class="{
-                                            'bg-yellow-100 text-yellow-800': order.status === 'pending',
-                                            'bg-blue-100 text-blue-800': order.status === 'confirmed',
-                                            'bg-purple-100 text-purple-800': order.status === 'processing',
-                                            'bg-indigo-100 text-indigo-800': order.status === 'shipped',
-                                            'bg-green-100 text-green-800': order.status === 'completed',
-                                            'bg-red-100 text-red-800': order.status === 'cancelled',
-                                        }"
-                                    >
-                                        {{ order.status.charAt(0).toUpperCase() + order.status.slice(1) }}
-                                    </span>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                    {{ order.active_items_count }} / {{ order.items_count }}
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                    {{ order.formatted_total }}
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                    <Link
-                                        :href="`/dashboard/orders/${order.id}`"
-                                        class="text-blue-600 hover:text-blue-900 font-medium"
-                                    >
-                                        View Details
-                                    </Link>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- Mobile Cards -->
-                <div class="md:hidden divide-y divide-gray-200">
-                    <div v-for="order in orders.data" :key="order.id" class="p-4 hover:bg-gray-50">
-                        <div class="flex items-center justify-between mb-2">
-                            <div>
-                                <span class="text-sm font-medium text-gray-900">{{ order.order_number }}</span>
-                                <span v-if="order.is_modified" class="ml-2 text-xs text-orange-600">Modified</span>
+            <div v-else class="space-y-4">
+                <Link 
+                    v-for="order in orders.data" 
+                    :key="order.id" 
+                    :href="`/dashboard/orders/${order.id}`"
+                    class="block bg-white border-2 border-gray-50 rounded-[12px] p-6 shadow-[0_12px_40px_rgb(0,0,0,0.02)] hover:shadow-[0_15px_50px_rgb(0,0,0,0.05)] hover:scale-[1.01] transition-all group"
+                >
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="space-y-1">
+                            <div class="flex items-center space-x-2">
+                                <span class="text-[16px] font-black tracking-tight text-gray-900">#{{ order.order_number }}</span>
+                                <span v-if="order.is_modified" class="bg-orange-50 text-orange-600 text-[10px] font-black uppercase px-2 py-0.5 rounded-lg border border-orange-100">MOD</span>
                             </div>
-                            <span
-                                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
-                                :class="{
-                                    'bg-yellow-100 text-yellow-800': order.status === 'pending',
-                                    'bg-blue-100 text-blue-800': order.status === 'confirmed',
-                                    'bg-purple-100 text-purple-800': order.status === 'processing',
-                                    'bg-indigo-100 text-indigo-800': order.status === 'shipped',
-                                    'bg-green-100 text-green-800': order.status === 'completed',
-                                    'bg-red-100 text-red-800': order.status === 'cancelled',
-                                }"
-                            >
-                                {{ order.status.charAt(0).toUpperCase() + order.status.slice(1) }}
-                            </span>
+                            <p class="text-[13px] font-bold text-gray-400">{{ order.created_at_formatted }}</p>
                         </div>
-
-                        <div class="grid grid-cols-2 gap-2 text-sm mb-3">
-                            <div>
-                                <p class="text-xs text-gray-500">Customer</p>
-                                <p class="text-gray-900">{{ order.customer_name }}</p>
-                            </div>
-                            <div>
-                                <p class="text-xs text-gray-500">Date</p>
-                                <p class="text-gray-900">{{ order.created_at_formatted }}</p>
-                            </div>
-                            <div>
-                                <p class="text-xs text-gray-500">Items</p>
-                                <p class="text-gray-900">{{ order.active_items_count }} / {{ order.items_count }}</p>
-                            </div>
-                            <div>
-                                <p class="text-xs text-gray-500">Total</p>
-                                <p class="font-medium text-gray-900">{{ order.formatted_total }}</p>
-                            </div>
-                        </div>
-
-                        <Link
-                            :href="`/dashboard/orders/${order.id}`"
-                            class="block w-full text-center py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm font-medium"
+                        <span 
+                            class="px-3 py-1 rounded-xl text-[11px] font-black uppercase tracking-wider border transition-colors"
+                            :class="getStatusStyles(order.status)"
                         >
-                            View Details
-                        </Link>
+                            {{ order.status }}
+                        </span>
                     </div>
-                </div>
 
-                <!-- Pagination -->
-                <div v-if="orders.last_page > 1" class="bg-white px-4 py-3 border-t border-gray-200">
-                    <div class="flex items-center justify-between">
-                        <p class="text-sm text-gray-700">
-                            Showing <span class="font-medium">{{ (orders.current_page - 1) * orders.per_page + 1 }}</span> to
-                            <span class="font-medium">{{ Math.min(orders.current_page * orders.per_page, orders.total) }}</span> of
-                            <span class="font-medium">{{ orders.total }}</span> orders
-                        </p>
-                        <div class="flex space-x-2">
-                            <button
-                                v-for="page in orders.last_page"
-                                :key="page"
-                                @click="goToPage(page)"
-                                :class="page === orders.current_page ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'"
-                                class="px-3 py-1 rounded-md text-sm font-medium"
-                            >
-                                {{ page }}
-                            </button>
+                    <div class="flex items-center space-x-4">
+                        <div class="w-12 h-12 rounded-[10px] bg-gray-50 flex items-center justify-center text-xl shadow-inner group-hover:scale-110 transition-transform">
+                            👤
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="font-bold text-[15px] text-gray-900 truncate leading-snug">{{ order.customer_name }}</p>
+                            <p class="text-[13px] font-bold text-gray-400 opacity-60 truncate">{{ order.customer_phone }}</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-[16px] font-black text-gray-900 leading-snug">{{ order.formatted_total }}</p>
+                            <p class="text-[12px] font-bold text-gray-300 uppercase tracking-widest">{{ order.active_items_count }} items</p>
                         </div>
                     </div>
-                </div>
+                </Link>
+            </div>
+
+            <!-- Pagination -->
+            <div v-if="orders.last_page > 1" class="flex items-center justify-center space-x-2 pt-6">
+                <button
+                    v-for="page in orders.last_page"
+                    :key="page"
+                    @click="goToPage(page)"
+                    :class="page === orders.current_page ? 'bg-black text-white' : 'bg-gray-50 text-gray-400 hover:text-black'"
+                    class="w-10 h-10 rounded-xl text-[14px] font-black transition-all active:scale-90"
+                >
+                    {{ page }}
+                </button>
             </div>
         </main>
     </div>
 </template>
+
+<style scoped>
+.transition-all {
+    transition-duration: 250ms;
+}
+</style>
